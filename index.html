@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Prism Tilt Lab v4 — Motion Tuning + Your Photo</title>
+<title>Prism Tilt Lab v5 — Dual Preview & Motion Accessibility</title>
 <style>
 :root {color-scheme: dark; font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif; background:#090b15; color:#f5f4ff}
 * {box-sizing:border-box} body {margin:0; min-height:100vh; background: radial-gradient(ellipse at 25% 0%,#251547 0%,transparent 40%),radial-gradient(ellipse at 90% 90%,#112743 0%,transparent 48%),#090b15;}
@@ -28,7 +28,7 @@ h1 span{color:#e5fc6c}.sub{font-size:13px;color:#aaaec4;margin-top:5px;max-width
 .fx-mask{position:absolute;inset:0;pointer-events:none; -webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
 .foil{position:absolute;inset:-34%;background:repeating-linear-gradient(113deg,rgba(245,14,193,.62) 0px,rgba(245,14,193,.38) var(--s1,38px),rgba(20,230,255,.7) var(--s2,72px),rgba(179,255,70,.57) var(--s3,108px),rgba(255,181,29,.56) var(--s4,148px),rgba(145,58,255,.64) var(--s5,184px),rgba(245,14,193,.62) var(--stripe,228px));mix-blend-mode:screen;opacity:.74;will-change:transform;pointer-events:none;filter:saturate(1.5)}
 .iridescence{position:absolute;inset:0;background:conic-gradient(from var(--angle,30deg) at var(--hx) var(--hy),#ff1892,#1ce7ff,#cbff64,#ffba48,#9c48ff,#ff1892);mix-blend-mode:soft-light;opacity:.55;pointer-events:none}
-.glint{position:absolute;inset:0;background:radial-gradient(ellipse 55% 45% at var(--hx) var(--hy),#ffffffdf 0%,#d1ecff8f 14%,#b1a2ff25 35%,transparent 74%);mix-blend-mode:screen;opacity:.65;pointer-events:none}
+.glint{position:absolute;inset:0;background:radial-gradient(ellipse var(--lightWidth,55%) var(--lightHeight,45%) at var(--hx) var(--hy),#ffffffdf 0%,#d1ecff8f 14%,#b1a2ff25 35%,transparent 74%);mix-blend-mode:screen;opacity:.65;pointer-events:none}
 .sheen{position:absolute;inset:0;background:linear-gradient(124deg,transparent 30%,#ffffff10 42%,#ffffff88 49%,#ffffff1b 56%,transparent 68%);mix-blend-mode:screen;opacity:.25;will-change:transform;pointer-events:none}
 .grain{position:absolute;inset:0;background:repeating-linear-gradient(0deg,#fff1 0 1px,transparent 1px 4px);opacity:.28;pointer-events:none}
 .frame{position:absolute;inset:7px;border:1px solid #e9e5ff66;border-radius:13px;box-shadow:inset 0 0 1px #fff;pointer-events:none}
@@ -90,17 +90,62 @@ input[type=range]{width:100%;accent-color:#d7fb68;cursor:pointer;margin:0;height
 .motion-readout{display:flex;gap:9px;flex-wrap:wrap;font-size:10px;color:#a7ffcf;margin-top:8px;direction:ltr;justify-content:flex-end}
 .motion-box select{background:#181d32}
 @media(max-width:410px){.motion-box .sliders,.photo-settings .sliders{grid-template-columns:1fr 1fr;gap:8px}.photo-toolbar .btn{font-size:11px;padding:9px}}
+
+/* v5: shared dual-sample engine — no modifications to the portfolio site */
+.view-toggle {display:flex;gap:7px;width:100%;margin:7px 0 13px;position:relative;z-index:3}
+.view-toggle button{flex:1;min-width:0;font-size:11px;white-space:normal}
+.view-toggle button.active {background:#454073;border-color:#dbd0ff;color:#fff}
+.duo-previews{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-items:center;width:100%;min-height:380px;position:relative;z-index:2;direction:ltr}
+.duo-previews .preview-zone{min-height:360px;width:100%;flex:unset}
+.duo-previews .card{width:min(83%,230px)}
+.preview-sample{display:flex;flex-direction:column;align-items:center;min-width:0;direction:rtl}
+.sample-name {font:700 11px/1.6 system-ui,sans-serif;color:#c9d4f9;text-align:center;position:relative;z-index:2;letter-spacing:.2px}
+.portrait-card{background:#14182a}
+.portrait-card .art img{display:block;width:100%;height:100%}
+.portrait-card.shape-circle{border-radius:50%;aspect-ratio:1}
+.portrait-card.shape-square{border-radius:5px;aspect-ratio:1}
+.portrait-card.shape-rounded{border-radius:19px;aspect-ratio:.73}
+.portrait-card .vignette{background:linear-gradient(180deg,transparent 55%,rgba(6,8,27,.2))}
+.portrait-card .frame{display:none}
+.photo-toolbar .btn{flex:1 1 140px}
+.access-box{padding:13px;border:1px solid #87986b;border-radius:14px;background:linear-gradient(120deg,#202a25,#141b2e);margin:0 0 15px}
+.access-box h3{font-size:14px;margin:0 0 9px;color:#e6ffcb}
+.access-box .field{margin-bottom:6px}
+.access-box p{font-size:11px;margin:4px 0 0;line-height:1.65;color:#bec9d0}
+.simple-mode .fx-mask,.simple-mode .halo,.simple-mode .sheen{display:none!important}
+.simple-mode .card,.simple-mode .art{transform:none!important;will-change:auto!important}
+.simple-mode .preview-zone{touch-action:auto;cursor:default}
+.simple-mode .card{box-shadow:0 12px 24px #0007;}
+.simple-mode #sensorBtn,.simple-mode #testFxBtn{opacity:.5;cursor:not-allowed}
+.advanced-block{border:1px solid #3d4464;border-radius:13px;padding:11px;margin:12px 0;background:#12192e}
+.advanced-block summary{font-size:12px;color:#dfe8ff;cursor:pointer;font-weight:750;padding:4px}
+.advanced-block .sliders{margin-top:13px}
+.how-box{margin:22px 0 0;padding:16px;border:1px solid #393c62;border-radius:18px;background:#151a31}
+.how-box summary{font-size:16px;font-weight:800;cursor:pointer;color:#e3eeff}
+.how-box p{font-size:12px;line-height:1.7;color:#b7c2e0}
+.pipeline{display:flex;flex-wrap:wrap;gap:9px;align-items:stretch;direction:ltr;margin:16px 0}
+.pipeline span{flex:1 1 120px;border:1px solid #475178;border-radius:10px;padding:11px;text-align:center;font-size:11px;background:#222741;color:#f0f5ff}
+.pipeline span b{display:block;color:#dafa88;margin-bottom:3px}
+.pipeline-arrow{display:flex;align-items:center;font-size:19px;color:#acbdff}
+.config-actions{margin:12px 0;display:flex;flex-wrap:wrap;gap:7px}
+@media(min-width:751px){.view-toggle{display:none}}
+@media(max-width:750px){.duo-previews{display:block;min-height:395px}.preview-sample{display:none}.preview-sample.active{display:flex}.duo-previews .preview-zone{min-height:355px}.duo-previews .card{width:min(66vw,268px)}.sample-name{margin-top:-3px}.stage{min-height:0}}
+@media(max-width:380px){.duo-previews .preview-zone{min-height:330px}.duo-previews .card{width:min(66vw,242px)}}
+
 </style>
 </head>
 <body>
 <div class="app">
   <header class="header">
-    <div><div class="kicker">MOTION FX LAB · EXPERIMENT 02</div><h1>PRISM <span>TILT</span> <small style="font-size:.37em;letter-spacing:1px;color:#ada7df;vertical-align:middle">v4</small></h1><div class="sub">אפקט הולוגרפי שמשנה צבע, ברק ועומק בהתאם לזווית הצפייה — בהשראת קלפי foil ומודים במשחקים.</div></div>
+    <div><div class="kicker">MOTION FX LAB · EXPERIMENT 02</div><h1>PRISM <span>TILT</span> <small style="font-size:.37em;letter-spacing:1px;color:#ada7df;vertical-align:middle">v5</small></h1><div class="sub">אפקט הולוגרפי שמשנה צבע, ברק ועומק בהתאם לזווית הצפייה — בהשראת קלפי foil ומודים במשחקים.</div></div>
     <div class="status" id="status">מצב מגע / עכבר</div>
   </header>
   <main class="workspace">
     <section class="stage">
       <div class="stage-head"><strong>LIVE PREVIEW</strong><span class="coords" id="coords">X 0° · Y 0°</span></div>
+      <nav class="view-toggle" aria-label="בחירת תצוגה במובייל"><button class="btn active" type="button" data-view="character" aria-pressed="true">🎭 דמות הפריזם</button><button class="btn" type="button" data-view="portrait" aria-pressed="false">📷 תמונת הפורטפוליו</button></nav>
+      <div class="duo-previews">
+        <div class="preview-sample active" id="characterSample">
       <div class="preview-zone" id="zone" aria-label="גררו או הזיזו את העכבר על הכרטיס כדי להטות אותו">
         <div class="halo"></div>
         <div class="card" id="card">
@@ -146,9 +191,29 @@ input[type=range]{width:100%;accent-color:#d7fb68;cursor:pointer;margin:0;height
           <div class="card-info"><div class="topline"><span>SPECIMEN // 001</span><span class="rare">PRISMATIC</span></div><div class="bottomline"><div class="class">HOLOGRAPHIC SERIES</div><div class="name">SPECTRAL<br/>SHIFT</div><div class="desc">MOVE TO REFRACT · POLYCHROME</div></div></div>
         </div>
       </div>
+      <div class="sample-name">🎭 PRISM CHARACTER</div>
+        </div>
+        <div class="preview-sample" id="portraitSample">
+          <div class="preview-zone" id="portraitZone" aria-label="תצוגת פריזם עם תמונת הפורטפוליו">
+            <div class="halo"></div>
+            <div class="card portrait-card photo-clean shape-rounded" id="portraitCard">
+              <div class="art" id="portraitArt"><img id="portraitImage" src="https://raw.githubusercontent.com/DorManDel/Dor-s-Profile-Site/main/images/profile_pic.jpg" alt="תמונת הפרופיל מהפורטפוליו" onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src='https://raw.githubusercontent.com/DorManDel/Dor-s-Profile-Site/main/images/profile_pic.jpg'}" /></div>
+              <div class="vignette"></div>
+              <div class="fx-mask" id="portraitFxMask">
+                <div class="foil" id="portraitFoil"></div>
+                <div class="iridescence" id="portraitIri"></div>
+                <div class="glint" id="portraitGlint"></div>
+                <div class="sheen" id="portraitSheen"></div>
+              </div>
+              <div class="grain"></div><div class="frame"></div>
+            </div>
+          </div>
+          <div class="sample-name">📷 PORTFOLIO PORTRAIT</div>
+        </div>
+      </div>
       <div class="sensor-verdict" id="sensorVerdict" role="status" aria-live="polite"><span class="verdict-dot"></span><span id="verdictText">Ready. Test the visual effect first, then try the real sensor.</span></div>
       <div class="stage-hint">הזז את העכבר או גרור עם האצבע על הכרטיס כדי לשנות זווית ותאורה</div>
-      <div class="photo-toolbar"><button class="btn upload" type="button" id="choosePhotoBtn">🖼️ נסה עם התמונה שלי</button><button class="btn" id="demoPhotoBtn" type="button" disabled>↶ חזרה לאיור</button></div>
+      <div class="photo-toolbar"><button class="btn upload" type="button" id="choosePhotoBtn">🖼️ החלף תמונת פורטפוליו</button><button class="btn" id="demoPhotoBtn" type="button" disabled>↶ שחזר תמונת פורטפוליו</button></div>
       <div class="stage-actions">
         <button class="btn primary" id="sensorBtn" type="button">📱 Connect phone tilt</button>
         <button class="btn" id="testFxBtn" type="button">🧪 Test FX (no sensor)</button>
@@ -158,9 +223,15 @@ input[type=range]{width:100%;accent-color:#d7fb68;cursor:pointer;margin:0;height
     </section>
     <aside class="controls">
       <div class="control-h"><strong>פקדי האפקט</strong><small>LIVE TUNING</small></div>
+      <div class="access-box" aria-label="Accessibility: motion preference">
+        <h3>♿ תצוגה ותנועה — Public Accessibility</h3>
+        <div class="field"><label for="displayMode">Motion / Simple Mode</label><select id="displayMode"><option value="auto">Auto — לפי הגדרות המכשיר (מומלץ)</option><option value="full">Full FX — תנועה ופריזם פעילים</option><option value="simple">Simple — תמונה רגילה, ללא תנועה ופריזם</option></select></div>
+        <p id="modeExplanation">Simple Mode מכבה את החיישן, התנועה והצבעים המונפשים. את אותו מנגנון אפשר יהיה ליישם גם ב־Ripple בהמשך.</p>
+      </div>
+
       <div class="field"><label for="preset">מראה מוכן מראש</label><select id="preset"><option value="main" selected>★ Main Profile — הבחירה שלנו</option><option value="holo">🌈 Holographic — קשת צבעונית</option><option value="subtle">✨ Subtle — עדין</option><option value="foil">💿 Foil — מתכתי</option><option value="neon">🪩 Neon — זוהר מוגזם</option><option value="custom">⚙ Custom — התאמה אישית</option></select></div>
       <div class="field"><label for="imageFile">🖼️ תמונה לניסוי (נשארת במכשיר שלך בלבד)</label><input id="imageFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif" aria-label="העלה תמונה כדי לבדוק עליה אפקט פריזם" style="width:100%;max-width:100%;font-size:11px;color:#b7bfd9" /></div>
-      <div class="photo-settings" id="photoSettings"><div class="field" style="margin:0"><label for="imageFit">חיתוך התמונה</label><select id="imageFit"><option value="cover">Fill / Cover — מילוי הכרטיס</option><option value="contain">Fit / Contain — כל התמונה</option></select></div>
+      <div class="photo-settings" id="photoSettings"><div class="field" style="margin:0"><label for="portraitShape">צורת מסגרת התמונה</label><select id="portraitShape"><option value="rounded">Rounded Portrait — כרטיס</option><option value="circle">Circle — כמו תמונת פרופיל</option><option value="square">Square — מרובע</option></select></div><div class="field" style="margin:9px 0"><label for="imageFit">חיתוך התמונה</label><select id="imageFit"><option value="cover">Fill / Cover — מילוי הכרטיס</option><option value="contain">Fit / Contain — כל התמונה</option></select></div>
         <div class="sliders">
           <div class="control"><div class="top"><label for="photoZoom">זום</label><output id="photoZoomOut">100%</output></div><input id="photoZoom" type="range" min="100" max="180" step="1" value="100"></div>
           <div class="control"><div class="top"><label for="photoY">מיקום אנכי</label><output id="photoYOut">50%</output></div><input id="photoY" type="range" min="0" max="100" value="50"></div>
@@ -182,6 +253,7 @@ input[type=range]{width:100%;accent-color:#d7fb68;cursor:pointer;margin:0;height
       <div class="field" style="margin:12px 0 10px"><label for="maskFile">קובץ מסכה (PNG שקוף, אזור אטום = אפקט)</label><input id="maskFile" type="file" accept="image/png,image/webp" style="width:100%;max-width:100%;font-size:11px;color:#b7bfd9"/></div>
       <p class="hint">מצב שריון מותאם לאיור הדוגמה. לתמונה שלך אפשר להעלות מסכת שקיפות נפרדת; הגוון המקורי מחוץ למסכה נשמר.</p>
       <div class="inline-actions" style="margin:12px 0 4px"><button class="btn" id="saveMain" type="button">★ שמור כ־Main</button><button class="btn" id="resetMain" type="button">↶ שחזר Main מקורי</button></div>
+      <div class="config-actions"><button class="btn" id="copyConfig" type="button">⧉ Copy Portfolio FX JSON</button><button class="btn" id="downloadConfig" type="button">↓ Export Settings</button></div>
       <div class="sep"></div>
       <p class="sectiontitle">צבע, אור ותנועה</p>
       <div class="sliders">
@@ -205,6 +277,14 @@ input[type=range]{width:100%;accent-color:#d7fb68;cursor:pointer;margin:0;height
         <div class="motion-readout"><span id="motionFps">FPS —</span><span id="motionDelta">Input —</span></div>
         <p class="motion-explain">0ms = תגובה מיידית. זמן תגובה וסינון גבוהים יותר = יותר החלקה, אבל גם יותר שיהוי. <b>Return</b> שולט בחזרה למרכז כשמפסיקים לגרור (לא מזיז חיישן פעיל למרכז).</p>
       </div>
+      <details class="advanced-block" open><summary>🧭 Advanced Geometry — זוויות, תנועת תמונה ותאורה</summary>
+        <div class="sliders">
+          <div class="control"><div class="top"><label for="tiltGainX">↔ מקדם הטיה אופקי</label><output id="tiltGainXOut">100%</output></div><input id="tiltGainX" type="range" min="0" max="200" step="5" value="100"></div>
+          <div class="control"><div class="top"><label for="tiltGainY">↕ מקדם הטיה אנכי</label><output id="tiltGainYOut">100%</output></div><input id="tiltGainY" type="range" min="0" max="200" step="5" value="100"></div>
+          <div class="control"><div class="top"><label for="prismRotation">🎨 זווית פסי פריזם</label><output id="prismRotationOut">0°</output></div><input id="prismRotation" type="range" min="-90" max="90" step="5" value="0"></div>
+          <div class="control"><div class="top"><label for="lightFocus">🔦 גודל נקודת אור</label><output id="lightFocusOut">55%</output></div><input id="lightFocus" type="range" min="20" max="100" step="5" value="55"></div>
+        </div>
+      </details>
       <div class="sep"></div>
       <div class="orientation"><p class="sectiontitle">הטיה ידנית · X / Y</p><div class="range-grid"><div class="control"><div class="top"><label for="xRange">ימינה / שמאלה</label><output id="xRangeOut">0%</output></div><input id="xRange" type="range" min="-100" max="100" value="0"></div><div class="control"><div class="top"><label for="yRange">למעלה / למטה</label><output id="yRangeOut">0%</output></div><input id="yRange" type="range" min="-100" max="100" value="0"></div></div></div>
       <div class="help-banner"><strong>Two independent tests</strong><span><b>① Test FX</b> moves the card automatically. If it moves, rendering works. <b>② Connect phone tilt</b> checks actual browser sensor events. Run ② on a published HTTPS page (not a downloaded file).</span></div>
@@ -225,10 +305,15 @@ permission: not requested</pre>
         <div class="inline-actions"><button class="btn" id="copyDiag" type="button">⧉ העתק נתוני אבחון</button><button class="btn" id="checkDiag" type="button">↻ בדוק הגבלות</button></div>
         <p class="hint">Real sensor data is counted ONLY when Android sends actual events. The FX self-test is labeled SIMULATION and never adds to these counters. For the real test, open this as a standalone HTTPS website.</p>
       </section>
-      <div class="message" id="message" aria-live="polite">בטלפון: לחץ על ״הפעל חיישן הטיה״ ואשר גישה לתנועה. אם הדפדפן לא מאפשר חיישנים, הפקדים הידניים וגרירה עדיין עובדים.</div>
-      <p class="footer"><b>פרטיות:</b> התמונות נשמרות רק בזיכרון הלשונית. אחרי רענון צריך לבחור אותן מחדש. ההגדרות נשמרות במכשיר באמצעות Local Storage. <b>טיפ:</b> התחל ב־Main Profile ובדוק שריון / קצוות. ניתן גם להנמיך את עוצמת הצבע ולשנות את מצב ה־Blend כדי לקבל מראה של קלף foil אמיתי. התמונה שמועלת נשארת בדפדפן.</p>
+      <div class="message" id="message" aria-live="polite">בטלפון: חיישן ההטיה יתחיל אוטומטית בדפדפן שמאפשר זאת. אם הדפדפן דורש אישור, לחץ על Enable phone tilt פעם אחת.</div>
+      <p class="footer"><b>פרטיות:</b> תמונת הפורטפוליו נטענת מה־GitHub הציבורי, ותמונות שתעלה נשארות רק בזיכרון הלשונית. אחרי רענון צריך לבחור אותן מחדש. ההגדרות נשמרות במכשיר באמצעות Local Storage. <b>טיפ:</b> התחל ב־Main Profile ובדוק שריון בדמות / Spot בתמונת הפורטפוליו. ניתן גם להנמיך את עוצמת הצבע ולשנות את מצב ה־Blend כדי לקבל מראה של קלף foil אמיתי. התמונה שמועלת נשארת בדפדפן.</p>
     </aside>
   </main>
+  <details class="how-box" id="howItWorks"><summary>🧠 How It Works — מדריך מכניקת הפריזם (סקירה ראשונית)</summary>
+    <p>הפריזם הוא מנוע שכבות CSS שקורא את זווית המכשיר, מנרמל אותה, מחליק את התנועה ומעדכן את ה־Transforms ואת שכבות ההחזר. הוא לא משנה את קובץ התמונה עצמו.</p>
+    <div class="pipeline"><span><b>1 · INPUT</b>Gyroscope / Touch / Mouse</span><span><b>2 · CONTROL</b>Calibration + Dead Zone</span><span><b>3 · FILTER</b>Motion Smoothing (ms)</span><span><b>4 · RENDER</b>CSS 3D + Prism Layers</span><span><b>5 · POLICY</b>Reduced Motion / Simple</span></div>
+    <p>מצב Simple מורה למנוע להציג את התמונות המקוריות בלבד. ההסבר המלא, תרשימי זרימה ודוגמאות קוד ייכתבו לאחר שנסיים לכוונן ולאשר את המראה.</p>
+  </details>
 </div>
 <script>
 (() => {
@@ -237,14 +322,22 @@ permission: not requested</pre>
   const clamp = (value, min=-1, max=1) => Math.max(min, Math.min(max, value));
   const fmt = n => Number.isFinite(n) ? Number(n).toFixed(2) : '—';
   const card=$('card'),zone=$('zone'),art=$('art'),foil=$('foil'),iri=$('iri'),glint=$('glint'),sheen=$('sheen'),fxMask=$('fxMask');
-  const ids=['foilAmount','shineAmount','depth','parallax','bands','sensitivity'];
+  const portrait={card:$('portraitCard'),zone:$('portraitZone'),art:$('portraitArt'),foil:$('portraitFoil'),iri:$('portraitIri'),glint:$('portraitGlint'),sheen:$('portraitSheen'),mask:$('portraitFxMask')};
+  const copies=[{card,zone,art,foil,iri,glint,sheen,mask:fxMask},portrait];
+  const reduceMQ=matchMedia('(prefers-reduced-motion: reduce)');
+  let displayMode='auto';
+  try{displayMode=localStorage.getItem('prism-display-mode-v5')||'auto'}catch{}
+  if(!['auto','full','simple'].includes(displayMode))displayMode='auto';
+  const isSimple=()=>displayMode==='simple'||(displayMode==='auto'&&reduceMQ.matches);
+
+  const ids=['foilAmount','shineAmount','depth','parallax','bands','sensitivity','tiltGainX','tiltGainY','prismRotation','lightFocus'];
   const motionIds=['responseMs','filterMs','deadzoneDeg','returnMs'];
   const motionPresets={direct:{responseMs:0,filterMs:0,deadzoneDeg:0,returnMs:0},responsive:{responseMs:35,filterMs:15,deadzoneDeg:.5,returnMs:140},balanced:{responseMs:110,filterMs:45,deadzoneDeg:1.5,returnMs:240},cinematic:{responseMs:230,filterMs:90,deadzoneDeg:2.5,returnMs:410}};
   const allIds=[...ids,...motionIds];
   // The following values are intentionally kept equal to the user's chosen Main Profile.
-  const mainOriginal={foilAmount:74,shineAmount:68,depth:16,parallax:13,bands:4,sensitivity:35,blend:'soft-light',mask:'armor',fxRefresh:30,...motionPresets.responsive};
+  const mainOriginal={foilAmount:74,shineAmount:68,depth:16,parallax:13,bands:4,sensitivity:35,blend:'soft-light',mask:'armor',fxRefresh:30,tiltGainX:100,tiltGainY:100,prismRotation:0,lightFocus:55,portraitShape:'rounded',...motionPresets.responsive};
   let stored=null;
-  try { stored=JSON.parse(localStorage.getItem('prism-tilt-main-v4') || localStorage.getItem('prism-tilt-main-v3') || localStorage.getItem('prism-tilt-main-v2') || 'null'); } catch {}
+  try { stored=JSON.parse(localStorage.getItem('prism-tilt-main-v5') || localStorage.getItem('prism-tilt-main-v4') || localStorage.getItem('prism-tilt-main-v3') || localStorage.getItem('prism-tilt-main-v2') || 'null'); } catch {}
   const main=(stored && Number.isFinite(stored.foilAmount)) ? {...mainOriginal,...stored} : {...mainOriginal};
   const presets={main,holo:{...mainOriginal,blend:'screen',mask:'full'},subtle:{...mainOriginal,foilAmount:29,shineAmount:33,depth:9,parallax:5,bands:3,sensitivity:40,blend:'soft-light',mask:'spot'},foil:{...mainOriginal,foilAmount:51,shineAmount:87,depth:13,parallax:8,bands:7,sensitivity:37,blend:'overlay',mask:'armor'},neon:{...mainOriginal,foilAmount:100,shineAmount:96,depth:25,parallax:24,bands:6,sensitivity:30,blend:'color-dodge',mask:'full'}};
   const state={x:0,y:0,tx:0,ty:0,drag:false,compare:false,sensor:false,simulation:false,simToken:0,
@@ -258,62 +351,78 @@ permission: not requested</pre>
   function report(msg){$('message').textContent=msg}
   function verdict(msg, kind=''){const el=$('sensorVerdict');el.className='sensor-verdict '+kind;$('verdictText').textContent=msg;}
   function modeLabel(s,on=false){$('status').textContent=s;$('status').classList.toggle('on',on)}
-  function outputs(){const units={foilAmount:'%',shineAmount:'%',depth:'°',parallax:'px',bands:'',sensitivity:'',responseMs:'ms',filterMs:'ms',deadzoneDeg:'°',returnMs:'ms'};
+  function outputs(){const units={foilAmount:'%',shineAmount:'%',depth:'°',parallax:'px',bands:'',sensitivity:'',tiltGainX:'%',tiltGainY:'%',prismRotation:'°',lightFocus:'%',responseMs:'ms',filterMs:'ms',deadzoneDeg:'°',returnMs:'ms'};
     allIds.forEach(id=>$(id+'Out').textContent=$(id).value+units[id]);
     $('xRangeOut').textContent=$('xRange').value+'%';$('yRangeOut').textContent=$('yRange').value+'%';}
   function applySettings(){outputs();const width=330-(read('bands')-1)*34;
-    foil.style.setProperty('--stripe',width+'px');[.17,.34,.51,.68,.85].forEach((k,i)=>foil.style.setProperty('--s'+(i+1),Math.round(width*k)+'px'));
-    foil.style.mixBlendMode=$('blend').value;foil.style.opacity=read('foilAmount')/100;
-    iri.style.opacity=read('foilAmount')/100*.7;glint.style.opacity=read('shineAmount')/100;sheen.style.opacity=read('shineAmount')/100*.6;}
+    copies.forEach(c=>{
+      c.foil.style.setProperty('--stripe',width+'px');
+      [.17,.34,.51,.68,.85].forEach((k,i)=>c.foil.style.setProperty('--s'+(i+1),Math.round(width*k)+'px'));
+      c.foil.style.mixBlendMode=$('blend').value;c.foil.style.opacity=read('foilAmount')/100;
+      c.iri.style.opacity=read('foilAmount')/100*.7;c.glint.style.opacity=read('shineAmount')/100;c.sheen.style.opacity=read('shineAmount')/100*.6;
+      c.card.style.setProperty('--lightWidth',read('lightFocus')+'%');
+      c.card.style.setProperty('--lightHeight',(read('lightFocus')*.82)+'%');
+    });}
   const maskSVG='<svg xmlns="http://www.w3.org/2000/svg" width="480" height="650" viewBox="0 0 480 650"><g fill="white"><path d="M135 399 L190 365 L294 365 L351 402 L386 650 L97 650 Z"/><path d="M146 219 L176 150 L218 124 L240 115 L262 124 L301 156 L337 222 L334 323 L304 373 L240 405 L176 374 L143 322 Z"/><path d="M155 89 L215 135 L240 114 L266 135 L326 89 L307 160 L341 204 L302 187 L240 164 L180 188 L140 206 L171 162 Z"/><path d="M28 650 L92 412 L175 357 L183 650 Z M452 650 L385 412 L310 357 L302 650 Z"/></g></svg>';
   const armorURL='url("data:image/svg+xml,'+encodeURIComponent(maskSVG)+'")';
   let currentMask='armor',maskURL=null,imageURL=null;
-  function maskStyle(mode){currentMask=mode;let rule='none';
-    if(mode==='armor')rule=armorURL;
-    if(mode==='edges')rule='radial-gradient(ellipse 57% 55% at 50% 48%, transparent 19%, rgba(0,0,0,.25) 48%, #000 83%)';
-    if(mode==='spot')rule='radial-gradient(ellipse 45% 38% at var(--hx,50%) var(--hy,40%), #000 8%, rgba(0,0,0,.85) 35%, transparent 100%)';
-    if(mode==='custom')rule=maskURL?'url("'+maskURL+'")':'none';
-    fxMask.style.webkitMaskImage=rule;fxMask.style.maskImage=rule;
+  function maskStyle(mode){currentMask=mode;
+    const spot='radial-gradient(ellipse 45% 38% at var(--hx,50%) var(--hy,40%), #000 8%, rgba(0,0,0,.85) 35%, transparent 100%)';
+    function ruleFor(m){if(m==='armor')return armorURL;
+      if(m==='edges')return 'radial-gradient(ellipse 57% 55% at 50% 48%, transparent 19%, rgba(0,0,0,.25) 48%, #000 83%)';
+      if(m==='spot')return spot;
+      if(m==='custom')return maskURL?'url("'+maskURL+'")':'none';return 'none';}
+    [fxMask,portrait.mask].forEach((m,i)=>{const modeForThis=i===1&&mode==='armor'?'spot':mode;const rule=ruleFor(modeForThis);m.style.webkitMaskImage=rule;m.style.maskImage=rule;});
     document.querySelectorAll('.mask-choice').forEach(b=>{b.classList.toggle('active',b.dataset.mask===mode);b.setAttribute('aria-pressed',String(b.dataset.mask===mode));});
-    if(mode==='custom' && !maskURL)report('Choose a transparent PNG mask. Opaque pixels receive the effect.');}
-  function capture(){return {...Object.fromEntries(allIds.map(id=>[id,read(id)])),blend:$('blend').value,mask:currentMask,fxRefresh:read('fxRefresh')}}
+    if(mode==='custom'&&!maskURL)report('Choose a transparent PNG mask. Opaque pixels receive the effect.');}
+  function capture(){return {...Object.fromEntries(allIds.map(id=>[id,read(id)])),blend:$('blend').value,mask:currentMask,fxRefresh:read('fxRefresh'),portraitShape:$('portraitShape').value,photoZoom:read('photoZoom'),photoX:read('photoX'),photoY:read('photoY'),imageFit:$('imageFit').value}}
   function identifyMotionPreset(){const p=Object.keys(motionPresets).find(k=>motionIds.every(id=>read(id)===motionPresets[k][id]));$('motionPreset').value=p||'custom'}
-  function preset(p){if(!p)return;allIds.forEach(id=>{if(Number.isFinite(p[id]))$(id).value=p[id]});$('blend').value=p.blend;$('fxRefresh').value=p.fxRefresh||30;maskStyle(p.mask||'full');applySettings();identifyMotionPreset()}
+  function preset(p){if(!p)return;allIds.forEach(id=>{if(Number.isFinite(p[id]))$(id).value=p[id]});$('blend').value=p.blend;$('fxRefresh').value=p.fxRefresh||30;maskStyle(p.mask||'full');if(p.portraitShape)$('portraitShape').value=p.portraitShape;for(const id of ['photoZoom','photoX','photoY'])if(Number.isFinite(p[id]))$(id).value=p[id];if(p.imageFit)$('imageFit').value=p.imageFit;refreshPhoto();applySettings();identifyMotionPreset()}
   $('motionPreset').addEventListener('change',()=>{const p=motionPresets[$('motionPreset').value];if(!p)return;motionIds.forEach(id=>$(id).value=p[id]);applySettings();state.filterLast=0;report('Motion profile: '+$('motionPreset').selectedOptions[0].textContent)});
   motionIds.forEach(id=>$(id).addEventListener('input',()=>{outputs();$('motionPreset').value='custom';state.filterLast=0}));
   document.querySelectorAll('.mask-choice').forEach(b=>b.addEventListener('click',()=>{maskStyle(b.dataset.mask);$('preset').value='custom'}));
   ids.forEach(id=>$(id).addEventListener('input',()=>{applySettings();$('preset').value='custom'}));
   $('blend').addEventListener('change',()=>{applySettings();$('preset').value='custom'});
   $('preset').addEventListener('change',()=>preset(presets[$('preset').value]));
-  $('saveMain').addEventListener('click',()=>{Object.assign(main,capture());try{localStorage.setItem('prism-tilt-main-v4',JSON.stringify(main));report('Main Profile saved locally on this device.')}catch{report('Main Profile saved for this tab only (localStorage unavailable).')}$('preset').value='main'});
-  $('resetMain').addEventListener('click',()=>{Object.assign(main,mainOriginal);try{localStorage.removeItem('prism-tilt-main-v4');localStorage.removeItem('prism-tilt-main-v3');localStorage.removeItem('prism-tilt-main-v2')}catch{}$('preset').value='main';preset(main);report('Main Profile restored to 74 / 68 / 16° / 13px / 4 / 35 · Soft Light.');});
+  $('saveMain').addEventListener('click',()=>{Object.assign(main,capture());try{localStorage.setItem('prism-tilt-main-v5',JSON.stringify(main));report('Main Profile saved locally on this device.')}catch{report('Main Profile saved for this tab only (localStorage unavailable).')}$('preset').value='main'});
+  $('resetMain').addEventListener('click',()=>{Object.assign(main,mainOriginal);try{localStorage.removeItem('prism-tilt-main-v5');localStorage.removeItem('prism-tilt-main-v3');localStorage.removeItem('prism-tilt-main-v2')}catch{}$('preset').value='main';preset(main);report('Main Profile restored to 74 / 68 / 16° / 13px / 4 / 35 · Soft Light.');});
   $('maskFile').addEventListener('change',e=>{const f=e.target.files?.[0];if(!f)return;
     if(!['image/png','image/webp'].includes(f.type)||f.size>10*1024*1024){report('Use a PNG or WebP mask smaller than 10MB.');return}
     if(maskURL)URL.revokeObjectURL(maskURL);maskURL=URL.createObjectURL(f);$('preset').value='custom';maskStyle('custom');report('Custom mask loaded locally.');});
-  function refreshPhoto(){const img=$('uploadedImage');img.style.objectFit=$('imageFit').value;
+  const originalPortraitSrc='https://raw.githubusercontent.com/DorManDel/Dor-s-Profile-Site/main/images/profile_pic.jpg';
+  function refreshPhoto(){const img=$('portraitImage');img.style.objectFit=$('imageFit').value;
     img.style.objectPosition=$('photoX').value+'% '+$('photoY').value+'%';img.style.transform='scale('+(read('photoZoom')/100).toFixed(2)+')';
     $('photoZoomOut').textContent=$('photoZoom').value+'%';$('photoXOut').textContent=$('photoX').value+'%';$('photoYOut').textContent=$('photoY').value+'%';
-    card.classList.toggle('photo-clean',!!imageURL&&$('cleanPhoto').checked);}
+    portrait.card.classList.remove('shape-rounded','shape-circle','shape-square');portrait.card.classList.add('shape-'+$('portraitShape').value);
+    // Keep the portrait free of specimen labels; only the sample character has them.
+    portrait.card.classList.add('photo-clean');}
   $('choosePhotoBtn').addEventListener('click',()=>$('imageFile').click());
-  $('demoPhotoBtn').addEventListener('click',()=>{if(imageURL)URL.revokeObjectURL(imageURL);imageURL=null;$('imageFile').value='';$('uploadedImage').removeAttribute('src');$('uploadedImage').style.display='none';$('demoArt').style.display='block';$('demoPhotoBtn').disabled=true;card.classList.remove('photo-clean');maskStyle('armor');report('Restored sample illustration.');});
-  ['photoZoom','photoX','photoY','imageFit','cleanPhoto'].forEach(id=>$(id).addEventListener(id==='cleanPhoto'?'change':'input',refreshPhoto));
+  $('demoPhotoBtn').addEventListener('click',()=>{if(imageURL)URL.revokeObjectURL(imageURL);imageURL=null;$('imageFile').value='';$('portraitImage').src=originalPortraitSrc;$('demoPhotoBtn').disabled=true;refreshPhoto();report('Restored the portrait from the public portfolio repository.');});
+  ['photoZoom','photoX','photoY','imageFit','cleanPhoto','portraitShape'].forEach(id=>$(id).addEventListener(id==='cleanPhoto'?'change':'input',refreshPhoto));
   $('imageFile').addEventListener('change',e=>{const f=e.target.files?.[0];if(!f)return;
     if(!f.type.startsWith('image/')||f.size>25*1024*1024){report('Use a JPG, PNG or WebP image smaller than 25MB.');return}
-    if(imageURL)URL.revokeObjectURL(imageURL);imageURL=URL.createObjectURL(f);$('uploadedImage').src=imageURL;$('uploadedImage').style.display='block';$('demoArt').style.display='none';$('demoPhotoBtn').disabled=false;
-    // The armor-shaped demo mask is not aligned with a personal portrait.
-    if(currentMask==='armor'){maskStyle('spot');$('preset').value='custom'}
-    refreshPhoto();report('Your photo is displayed LOCALLY. Adjust zoom, crop, selective mask and response time. The photo is never uploaded.');});
+    if(imageURL)URL.revokeObjectURL(imageURL);imageURL=URL.createObjectURL(f);$('portraitImage').src=imageURL;$('demoPhotoBtn').disabled=false;
+    refreshPhoto();report('Your photo is displayed LOCALLY in the portrait card.');
+    if(innerWidth<=750)setPreview('portrait');});
+  $('portraitImage').addEventListener('load',()=>{report('Portfolio portrait loaded. Both previews now share the same Prism settings.');});
+  $('portraitImage').addEventListener('error',()=>{report('The portfolio photo could not be loaded. Use the upload button to choose an image locally.');});
+  function setPreview(view){document.querySelectorAll('[data-view]').forEach(b=>{b.classList.toggle('active',b.dataset.view===view);b.setAttribute('aria-pressed',String(b.dataset.view===view));});$('characterSample').classList.toggle('active',view==='character');$('portraitSample').classList.toggle('active',view==='portrait');}
+  document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setPreview(b.dataset.view)));
   function syncManual(){$('xRange').value=Math.round(state.tx*100);$('yRange').value=Math.round(state.ty*100);outputs()}
   function stopSimulation(){state.simToken++;state.simulation=false;$('testFxBtn').classList.remove('running');$('testFxBtn').textContent='🧪 Test FX (no sensor)'}
   function stopSensor(message){state.sensor=false;window.removeEventListener('deviceorientation',onOrientation);window.removeEventListener('deviceorientationabsolute',onAbsolute);window.removeEventListener('devicemotion',onMotion);
     state.baseOrientation=null;state.baseGravity=null;state.filterLast=0;state.filterSource='none';$('sensorBtn').textContent='📱 Connect phone tilt';$('sensorBtn').classList.remove('live');modeLabel('Touch / mouse');if(message)report(message)}
-  function manual(){if(state.sensor)stopSensor('Switched to manual input.');if(state.simulation)stopSimulation();state.returning=false;state.tx=read('xRange')/100;state.ty=read('yRange')/100;outputs()}
+  function manual(){if(isSimple())return;if(state.sensor)stopSensor('Switched to manual input.');if(state.simulation)stopSimulation();state.returning=false;state.tx=read('xRange')/100;state.ty=read('yRange')/100;outputs()}
   $('xRange').addEventListener('input',manual);$('yRange').addEventListener('input',manual);
-  function pointer(e){const r=zone.getBoundingClientRect();state.returning=false;state.tx=clamp(((e.clientX-r.left)/r.width-.5)*2);state.ty=clamp(((e.clientY-r.top)/r.height-.5)*2);syncManual()}
-  zone.addEventListener('pointerdown',e=>{if(state.sensor)stopSensor('Switched to pointer input.');if(state.simulation)stopSimulation();state.drag=true;try{zone.setPointerCapture(e.pointerId)}catch{}pointer(e)});
+  function pointer(e,z=zone){if(isSimple())return;const r=z.getBoundingClientRect();state.returning=false;state.tx=clamp(((e.clientX-r.left)/r.width-.5)*2);state.ty=clamp(((e.clientY-r.top)/r.height-.5)*2);syncManual()}
+  zone.addEventListener('pointerdown',e=>{if(isSimple())return;if(state.sensor)stopSensor('Switched to pointer input.');if(state.simulation)stopSimulation();state.drag=true;try{zone.setPointerCapture(e.pointerId)}catch{}pointer(e)});
   zone.addEventListener('pointermove',e=>{if(state.sensor||state.simulation||(e.pointerType==='touch'&&!state.drag))return;pointer(e)});
   zone.addEventListener('pointerup',()=>state.drag=false);zone.addEventListener('pointercancel',()=>state.drag=false);
   zone.addEventListener('pointerleave',()=>{if(!state.sensor&&!state.drag&&!state.simulation){state.tx=state.ty=0;state.returning=true;syncManual()}});
+  portrait.zone.addEventListener('pointerdown',e=>{if(isSimple())return;if(state.sensor)stopSensor('Manual portrait preview.');if(state.simulation)stopSimulation();state.drag=true;try{portrait.zone.setPointerCapture(e.pointerId)}catch{}pointer(e,portrait.zone)});
+  portrait.zone.addEventListener('pointermove',e=>{if(isSimple()||state.sensor||state.simulation||(e.pointerType==='touch'&&!state.drag))return;pointer(e,portrait.zone)});
+  portrait.zone.addEventListener('pointerup',()=>state.drag=false);portrait.zone.addEventListener('pointercancel',()=>state.drag=false);
+  portrait.zone.addEventListener('pointerleave',()=>{if(!state.sensor&&!state.drag&&!state.simulation){state.tx=state.ty=0;state.returning=true;syncManual()}});
   function screenTransform(x,y){const a=((screen.orientation?.angle??window.orientation??0)+360)%360;
     if(a===90)return [y,-x];if(a===270)return [-y,x];if(a===180)return [-x,-y];return [x,y]}
   function shortestAngleDelta(a,b){return ((a-b+540)%360)-180}
@@ -407,23 +516,29 @@ permission: not requested</pre>
       const parts=res.map((r,i)=>requested[i][0]+':'+(r.status==='fulfilled'?r.value:(r.reason?.name||'error')));
       state.permission=parts.join(' · ');return state.permission;});
   }
-  $('sensorBtn').addEventListener('click',async()=>{
-    if(state.sensor){stopSensor('Sensor stopped.');classify();return}
+  let sensorPreference=true; // Always try the sensors automatically on HTTPS, unless Simple Mode is active.
+  async function startSensor(userGesture=false){
+    if(isSimple())return;
+    if(state.sensor)return;
     if(state.simulation)stopSimulation();
     const env=environment();
-    if(!env.secure){verdict('HTTPS REQUIRED: this page is not a secure context.','fail');report('Publish the supplied index.html on GitHub Pages or another HTTPS host.');return;}
+    if(!env.secure){verdict('HTTPS required for sensor access. Manual controls remain available.','warn');return;}
     if(!('DeviceOrientationEvent' in window)&&!('DeviceMotionEvent' in window)){
-      verdict('NO DEVICE ORIENTATION API exposed to this page.','fail');report('This browser/context does not expose either sensor event API.');return;}
+      verdict('Sensor API not exposed. You can use touch or mouse.','warn');return;}
     const blocked=env.policy.filter(x=>x.includes('BLOCKED'));
-    if(blocked.some(x=>x.startsWith('accelerometer=BLOCKED'))){verdict('Accelerometer Permissions-Policy BLOCKED: '+blocked.join(', '),'fail');report('Gravity fallback needs accelerometer permission. Open a direct HTTPS URL, or fix its Permissions-Policy.');return;}
-    if(blocked.length)report('Gyroscope policy is blocked; attempting accelerometer gravity fallback.');
-    state.permission='checking';state.permissionError=null;
-    // Trigger permission while the original click user activation still exists.
-    const permissions=await permissionsRequested();
-    if(/denied|NotAllowedError|SecurityError/.test(permissions)){
-      verdict('A permission request was denied ('+permissions+'). Listening for any available sensor API…','warn');
-      report('Some browsers reject permission requests for one API even if the other works. Checking event counters before deciding.');
+    if(blocked.some(x=>x.startsWith('accelerometer=BLOCKED'))){verdict('Accelerometer blocked by Permissions-Policy.','fail');return;}
+    const hasGesturePermission=(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function')||
+      (typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function');
+    if(hasGesturePermission&&!userGesture){
+      verdict('Tap “Enable phone tilt” once: this browser requires a user gesture to grant sensor access.','warn');
+      $('sensorBtn').textContent='📱 Enable phone tilt';return;
     }
+    if(userGesture){
+      state.permission='checking';const permissions=await permissionsRequested();
+      if(/denied|NotAllowedError|SecurityError/.test(permissions)){
+        verdict('Sensor permission denied: '+permissions+'. Manual preview still works.','warn');
+      }
+    }else state.permission='automatic browser permission';
     state.sensor=true;state.baseOrientation=null;state.baseGravity=null;state.filterLast=0;state.filterSource='none';state.rawOrientation=null;state.rawGravity=null;
     state.orientationCount=0;state.orientationValid=0;state.absoluteCount=0;state.motionCount=0;state.motionValid=0;
     state.lastOrientationAt=0;state.lastMotionAt=0;state.lastInputAt=0;state.seenMovement=false;
@@ -431,12 +546,24 @@ permission: not requested</pre>
     window.addEventListener('deviceorientation',onOrientation,{passive:true});
     window.addEventListener('deviceorientationabsolute',onAbsolute,{passive:true});
     window.addEventListener('devicemotion',onMotion,{passive:true});
-    $('sensorBtn').textContent='⏹ Disconnect sensor';$('sensorBtn').classList.add('live');modeLabel('Listening…');$('diagState').textContent='Listening…';
-    report('Connected listeners. Tilt your phone left/right and up/down while watching the event counters.');
-    classify();setTimeout(()=>{if(state.sensor)classify()},4200);
+    $('sensorBtn').textContent='⏹ Disable phone tilt';$('sensorBtn').classList.add('live');
+    modeLabel(userGesture?'Listening…':'Auto sensor…');$('diagState').textContent='Listening…';
+    report('Sensor listening automatically. Tilt your phone and watch both previews.');
+    classify();setTimeout(()=>{if(!state.sensor)return;classify();if(state.source==='none'){
+      verdict('No usable readings yet. If Chrome needs permission, tap the sensor button to retry.','warn');
+      $('sensorBtn').textContent='📱 Retry sensor permission';
+    }},4200);
+  }
+  $('sensorBtn').addEventListener('click',async()=>{
+    if(isSimple())return;
+    if(state.sensor&&state.source!=='none'){
+      sensorPreference=false;stopSensor('Phone tilt disabled by user. Reload to restore automatic startup.');classify();return;
+    }
+    if(state.sensor)stopSensor('Retrying with user gesture…');
+    sensorPreference=true;await startSensor(true);
   });
   $('testFxBtn').addEventListener('click',()=>{
-    if(state.simulation){stopSimulation();state.tx=state.ty=0;classify();return}
+    if(isSimple())return;if(state.simulation){stopSimulation();state.tx=state.ty=0;classify();return}
     if(state.sensor)stopSensor('Switched to simulated FX testing.');
     state.simulation=true;state.source='none';state.tx=state.ty=0;const token=++state.simToken;
     $('testFxBtn').classList.add('running');$('testFxBtn').textContent='⏹ Stop FX test';modeLabel('SIMULATION (no sensor)',true);
@@ -451,7 +578,7 @@ permission: not requested</pre>
   });
   $('recenterBtn').addEventListener('click',()=>{state.tx=state.ty=0;state.x=state.y=0;state.baseOrientation=null;state.baseGravity=null;state.filterLast=0;state.filterSource='none';state.orientationMoved=false;state.gravityMoved=false;state.seenMovement=false;syncManual();
     report(state.sensor?'Recalibrated. Current phone position becomes zero at the next sample.':'Recentered manual tilt.');});
-  $('compareBtn').addEventListener('click',()=>{state.compare=!state.compare;card.classList.toggle('compare',state.compare);$('compareBtn').classList.toggle('before',state.compare);$('compareBtn').textContent=state.compare?'◧ חזור לאפקט':'◧ הצג מקור'});
+  $('compareBtn').addEventListener('click',()=>{state.compare=!state.compare;copies.forEach(c=>c.card.classList.toggle('compare',state.compare));$('compareBtn').classList.toggle('before',state.compare);$('compareBtn').textContent=state.compare?'◧ חזור לאפקט':'◧ הצג מקור'});
   window.addEventListener('keydown',e=>{if(e.target.matches('input,select,button'))return;const d=.12;
     if(e.key==='ArrowLeft')state.tx-=d;else if(e.key==='ArrowRight')state.tx+=d;else if(e.key==='ArrowUp')state.ty-=d;else if(e.key==='ArrowDown')state.ty+=d;else return;
     e.preventDefault();if(state.sensor)stopSensor('Manual keyboard input.');if(state.simulation)stopSimulation();state.tx=clamp(state.tx);state.ty=clamp(state.ty);syncManual()});
@@ -489,16 +616,22 @@ permission: not requested</pre>
     if(Math.abs(state.x-state.tx)<.0003)state.x=state.tx;
     if(Math.abs(state.y-state.ty)<.0003)state.y=state.ty;
     const d=read('depth'),p=read('parallax');
-    card.style.transform=state.compare?'none':`rotateX(${(-state.y*d).toFixed(2)}deg) rotateY(${(state.x*d).toFixed(2)}deg)`;
-    art.style.transform=`translate(${(state.x*p).toFixed(2)}px,${(state.y*p).toFixed(2)}px) scale(1.08)`;
-    foil.style.transform=`translate(${(-state.x*52).toFixed(1)}px,${(-state.y*52).toFixed(1)}px) rotate(${(state.x*9).toFixed(2)}deg)`;
-    // Separate fast compositor transforms from heavier paint-driven gradient updates.
-    if(now-state.lastGradientAt >= 1000/read('fxRefresh')){
-      card.style.setProperty('--hx',(50+state.x*39).toFixed(1)+'%');card.style.setProperty('--hy',(40+state.y*43).toFixed(1)+'%');
-      card.style.setProperty('--angle',(30+state.x*80+state.y*25).toFixed(1)+'deg');
-      state.lastGradientAt=now;
+    // Two independent image surfaces driven by ONE normalized motion state.
+    if(!isSimple()){
+      copies.forEach(c=>{
+        const gx=read('tiltGainX')/100,gy=read('tiltGainY')/100;
+        c.card.style.transform=state.compare?'none':`rotateX(${(-state.y*d*gy).toFixed(2)}deg) rotateY(${(state.x*d*gx).toFixed(2)}deg)`;
+        c.art.style.transform=`translate(${(state.x*p*gx).toFixed(2)}px,${(state.y*p*gy).toFixed(2)}px) scale(1.08)`;
+        c.foil.style.transform=`translate(${(-state.x*52).toFixed(1)}px,${(-state.y*52).toFixed(1)}px) rotate(${(state.x*9+read('prismRotation')).toFixed(2)}deg)`;
+        c.sheen.style.transform=`translateX(${(state.x*90).toFixed(1)}px)`;
+      });
+      if(now-state.lastGradientAt >= 1000/read('fxRefresh')){
+        copies.forEach(c=>{
+          c.card.style.setProperty('--hx',(50+state.x*39).toFixed(1)+'%');c.card.style.setProperty('--hy',(40+state.y*43).toFixed(1)+'%');
+          c.card.style.setProperty('--angle',(30+state.x*80+state.y*25+read('prismRotation')).toFixed(1)+'deg');
+        });state.lastGradientAt=now;
+      }
     }
-    sheen.style.transform=`translateX(${(state.x*90).toFixed(1)}px)`;
     state.frameCount++;
     if(now-state.lastUiUpdate>140){
       $('coords').textContent=`X ${(state.x*d).toFixed(0)}° · Y ${(state.y*d).toFixed(0)}°`;
@@ -510,7 +643,35 @@ permission: not requested</pre>
     }
     requestAnimationFrame(render);
   }
+  // One policy for all motion effects. Future Ripple/Carousel components can consult this preference.
+  function setDisplayMode(mode,{persist=true}={}){
+    displayMode=mode;$('displayMode').value=mode;
+    const simple=isSimple();document.body.classList.toggle('simple-mode',simple);
+    $('modeExplanation').textContent=simple?'SIMPLE ACTIVE: Sensor, parallax, rotation and Prism are disabled. The original photo remains visible.':
+      'FULL FX ACTIVE: Motion and Prism are available. Sensor starts automatically where browser permissions allow.';
+    $('sensorBtn').disabled=simple;$('testFxBtn').disabled=simple;
+    if(simple){if(state.sensor)stopSensor('Simple Mode');if(state.simulation)stopSimulation();
+      state.x=state.y=state.tx=state.ty=0;state.returning=false;syncManual();
+      modeLabel('Simple / static');verdict('Simple Mode — original photos, no sensor animation.','good');}
+    else if(sensorPreference){startSensor(false);}
+    if(persist)try{localStorage.setItem('prism-display-mode-v5',mode)}catch{}
+  }
+  $('displayMode').addEventListener('change',()=>setDisplayMode($('displayMode').value));
+  if(typeof reduceMQ.addEventListener==='function')reduceMQ.addEventListener('change',()=>{if(displayMode==='auto')setDisplayMode('auto',{persist:false})});
+  // The saved profile controls the engine; mode selection controls accessibility.
+  function exportConfig(){return {
+    schema:'myportfolio.prism.v1',version:'5',
+    accessibility:{mode:displayMode,followSystemReducedMotion:displayMode==='auto',disableEffectsInSimpleMode:true},
+    sensor:{autoStart:true,permissionFallback:'user-gesture'},
+    fx:capture(),portrait:{asset:'https://raw.githubusercontent.com/DorManDel/Dor-s-Profile-Site/main/images/profile_pic.jpg',fit:$('imageFit').value,shape:$('portraitShape').value}
+  }}
+  $('copyConfig').addEventListener('click',async()=>{
+    const txt=JSON.stringify(exportConfig(),null,2);try{await navigator.clipboard.writeText(txt);report('Copied portable Prism settings JSON.');}
+    catch{const tmp=document.createElement('textarea');tmp.value=txt;document.body.appendChild(tmp);tmp.select();document.execCommand('copy');tmp.remove();report('Copied Prism settings (legacy clipboard).')}});
+  $('downloadConfig').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(exportConfig(),null,2)],{type:'application/json'});
+    const href=URL.createObjectURL(blob);const a=document.createElement('a');a.href=href;a.download='prism-profile-v5.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(href),1200)});
   preset(main);$('preset').value='main';refreshPhoto();environment();classify();updateDiag();setInterval(updateDiag,500);
+  setDisplayMode(displayMode,{persist:false});
   document.addEventListener('visibilitychange',()=>{if(document.hidden&&state.simulation)stopSimulation();if(!document.hidden)classify()});
   render();
 })();
