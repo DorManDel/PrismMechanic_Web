@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Prism Tilt Lab v3 — Sensor Fix</title>
+<title>Prism Tilt Lab v4 — Motion Tuning + Your Photo</title>
 <style>
 :root {color-scheme: dark; font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif; background:#090b15; color:#f5f4ff}
 * {box-sizing:border-box} body {margin:0; min-height:100vh; background: radial-gradient(ellipse at 25% 0%,#251547 0%,transparent 40%),radial-gradient(ellipse at 90% 90%,#112743 0%,transparent 48%),#090b15;}
@@ -35,7 +35,7 @@ h1 span{color:#e5fc6c}.sub{font-size:13px;color:#aaaec4;margin-top:5px;max-width
 .card-info{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:24px 22px 19px;pointer-events:none;text-shadow:0 2px 9px #000,0 1px 4px #000}
 .topline{display:flex;gap:6px;justify-content:space-between;align-items:flex-start;font-size:10px;letter-spacing:2px;font-weight:800;direction:ltr}.topline .rare{border:1px solid #f1e694;background:#ffffc022;color:#fff9c5;padding:4px 6px;border-radius:5px;font-size:9px}
 .bottomline{display:flex;flex-direction:column;direction:ltr;align-items:flex-start}.bottomline .class{font-size:10px;letter-spacing:3.4px;color:#e6caff;font-weight:bold}.bottomline .name{font-size:clamp(25px,3vw,31px);font-weight:1000;letter-spacing:-1.6px;line-height:1.15}.bottomline .desc{margin-top:6px;font-size:9px;letter-spacing:2px;color:#dce1f0;font-weight:700}
-.compare .fx-mask{opacity:0!important}.compare .art{filter:none!important}.compare{transform:none!important}
+.compare .fx-mask{opacity:0!important}.compare .art{filter:none!important}.compare{transform:none!important}.photo-clean .card-info,.photo-clean .frame,.photo-clean .grain{display:none!important}
 .stage-hint{position:relative;z-index:2;text-align:center;color:#b2b8d0;font-size:12px;line-height:1.6;margin:5px 10px 0}
 .stage-actions{width:100%;display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:13px;position:relative;z-index:2}
 .btn{background:#262a42;border:1px solid #494e72;border-radius:11px;color:#ebefff;padding:10px 12px;font-size:12px;font-weight:750;transition:background .15s,transform .15s;white-space:nowrap}
@@ -72,12 +72,30 @@ input[type=range]{width:100%;accent-color:#d7fb68;cursor:pointer;margin:0;height
 #testFxBtn.running{background:#49366a;border-color:#ab7fe6;color:#f9e6ff}.btn:focus-visible,.mask-choice:focus-visible{outline:2px solid #d7fb68;outline-offset:3px}
 @media(max-width:750px){.stage{min-height:0}.sensor-verdict{font-size:11px}}
 
+
+/* v4: mobile-friendly quick photo and motion controls */
+.photo-toolbar{position:relative;z-index:2;display:flex;justify-content:center;gap:7px;flex-wrap:wrap;width:100%;margin:11px 0 3px}
+.photo-toolbar .btn{min-width:0;white-space:normal}
+.photo-toolbar .btn.upload{border-color:#9e8fdf;background:linear-gradient(115deg,#373061,#243d5b)}
+.photo-toolbar .btn:disabled{opacity:.42;cursor:not-allowed}
+.photo-settings{padding:12px;margin:9px 0 15px;border:1px solid #43435f;border-radius:12px;background:#151a2e}
+.photo-settings .sliders{margin:9px 0 0}
+.toggle{display:flex;align-items:center;gap:8px;font-size:12px;color:#cbd1ef;margin-top:12px;cursor:pointer}
+.toggle input{width:18px;height:18px;accent-color:#d7fb68}
+.motion-box{border:1px solid #5c557d;border-radius:15px;background:linear-gradient(135deg,#211d3b,#13182b);padding:13px;margin:10px 0 16px}
+.motion-box .sectiontitle{color:#dce5ff;margin-bottom:7px}
+.motion-box .field{margin-bottom:9px}
+.motion-box .sliders{margin-top:10px}
+.motion-explain{font-size:11px;color:#aebcda;line-height:1.6;margin:9px 0 0}
+.motion-readout{display:flex;gap:9px;flex-wrap:wrap;font-size:10px;color:#a7ffcf;margin-top:8px;direction:ltr;justify-content:flex-end}
+.motion-box select{background:#181d32}
+@media(max-width:410px){.motion-box .sliders,.photo-settings .sliders{grid-template-columns:1fr 1fr;gap:8px}.photo-toolbar .btn{font-size:11px;padding:9px}}
 </style>
 </head>
 <body>
 <div class="app">
   <header class="header">
-    <div><div class="kicker">MOTION FX LAB · EXPERIMENT 01</div><h1>PRISM <span>TILT</span></h1><div class="sub">אפקט הולוגרפי שמשנה צבע, ברק ועומק בהתאם לזווית הצפייה — בהשראת קלפי foil ומודים במשחקים.</div></div>
+    <div><div class="kicker">MOTION FX LAB · EXPERIMENT 02</div><h1>PRISM <span>TILT</span> <small style="font-size:.37em;letter-spacing:1px;color:#ada7df;vertical-align:middle">v4</small></h1><div class="sub">אפקט הולוגרפי שמשנה צבע, ברק ועומק בהתאם לזווית הצפייה — בהשראת קלפי foil ומודים במשחקים.</div></div>
     <div class="status" id="status">מצב מגע / עכבר</div>
   </header>
   <main class="workspace">
@@ -130,6 +148,7 @@ input[type=range]{width:100%;accent-color:#d7fb68;cursor:pointer;margin:0;height
       </div>
       <div class="sensor-verdict" id="sensorVerdict" role="status" aria-live="polite"><span class="verdict-dot"></span><span id="verdictText">Ready. Test the visual effect first, then try the real sensor.</span></div>
       <div class="stage-hint">הזז את העכבר או גרור עם האצבע על הכרטיס כדי לשנות זווית ותאורה</div>
+      <div class="photo-toolbar"><button class="btn upload" type="button" id="choosePhotoBtn">🖼️ נסה עם התמונה שלי</button><button class="btn" id="demoPhotoBtn" type="button" disabled>↶ חזרה לאיור</button></div>
       <div class="stage-actions">
         <button class="btn primary" id="sensorBtn" type="button">📱 Connect phone tilt</button>
         <button class="btn" id="testFxBtn" type="button">🧪 Test FX (no sensor)</button>
@@ -140,7 +159,16 @@ input[type=range]{width:100%;accent-color:#d7fb68;cursor:pointer;margin:0;height
     <aside class="controls">
       <div class="control-h"><strong>פקדי האפקט</strong><small>LIVE TUNING</small></div>
       <div class="field"><label for="preset">מראה מוכן מראש</label><select id="preset"><option value="main" selected>★ Main Profile — הבחירה שלנו</option><option value="holo">🌈 Holographic — קשת צבעונית</option><option value="subtle">✨ Subtle — עדין</option><option value="foil">💿 Foil — מתכתי</option><option value="neon">🪩 Neon — זוהר מוגזם</option><option value="custom">⚙ Custom — התאמה אישית</option></select></div>
-      <div class="field"><label for="imageFile">תמונה לניסוי (מהמכשיר שלך)</label><input id="imageFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif" aria-label="העלה תמונה כדי לבדוק עליה אפקט פריזם" style="width:100%;max-width:100%;font-size:11px;color:#b7bfd9" /></div>
+      <div class="field"><label for="imageFile">🖼️ תמונה לניסוי (נשארת במכשיר שלך בלבד)</label><input id="imageFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif" aria-label="העלה תמונה כדי לבדוק עליה אפקט פריזם" style="width:100%;max-width:100%;font-size:11px;color:#b7bfd9" /></div>
+      <div class="photo-settings" id="photoSettings"><div class="field" style="margin:0"><label for="imageFit">חיתוך התמונה</label><select id="imageFit"><option value="cover">Fill / Cover — מילוי הכרטיס</option><option value="contain">Fit / Contain — כל התמונה</option></select></div>
+        <div class="sliders">
+          <div class="control"><div class="top"><label for="photoZoom">זום</label><output id="photoZoomOut">100%</output></div><input id="photoZoom" type="range" min="100" max="180" step="1" value="100"></div>
+          <div class="control"><div class="top"><label for="photoY">מיקום אנכי</label><output id="photoYOut">50%</output></div><input id="photoY" type="range" min="0" max="100" value="50"></div>
+          <div class="control"><div class="top"><label for="photoX">מיקום אופקי</label><output id="photoXOut">50%</output></div><input id="photoX" type="range" min="0" max="100" value="50"></div>
+        </div>
+        <label class="toggle"><input id="cleanPhoto" type="checkbox" checked /> הסתר כותרת ומסגרת כשמעלים תמונה</label>
+        <p class="hint">התמונה שלך נטענת מקומית. לפריזם סלקטיבי על צילום אמיתי נסה "נקודת אור נעה" או "קצוות"; מצב "שריון" מיועד לאיור הדוגמה.</p>
+      </div>
       <div class="field"><label for="blend">שילוב הצבע על התמונה (Blend mode)</label><select id="blend"><option value="screen">Screen — בהיר וצבעוני</option><option value="overlay">Overlay — מדגיש ניגודיות</option><option value="soft-light">Soft light — עדין וטבעי</option><option value="color-dodge">Color dodge — זוהר חזק</option></select></div>
       <div class="sep"></div>
       <p class="sectiontitle">🎭 Prism Selective — בחירת אזורים</p>
@@ -164,6 +192,19 @@ input[type=range]{width:100%;accent-color:#d7fb68;cursor:pointer;margin:0;height
         <div class="control"><div class="top"><label for="bands">〰️ צפיפות פסי צבע</label><output id="bandsOut">4</output></div><input id="bands" type="range" min="1" max="8" value="4"></div>
         <div class="control"><div class="top"><label for="sensitivity">📱 רגישות הטיה</label><output id="sensitivityOut">35</output></div><input id="sensitivity" type="range" min="10" max="80" value="35"></div>
       </div>
+      <div class="motion-box" aria-label="Motion response tuning">
+        <p class="sectiontitle">⚡ Motion & Response — תגובתיות ודיליי</p>
+        <div class="field"><label for="motionPreset">סגנון תנועה</label><select id="motionPreset"><option value="direct">⚡ Direct — ללא החלקה</option><option value="responsive" selected>🎯 Responsive — תגובה מהירה</option><option value="balanced">〰 Balanced — תנועה רכה</option><option value="cinematic">🎬 Cinematic — תנועה איטית</option><option value="custom">⚙ Custom — התאמה ידנית</option></select></div>
+        <div class="sliders">
+          <div class="control"><div class="top"><label for="responseMs">🚀 זמן תגובה</label><output id="responseMsOut">35ms</output></div><input id="responseMs" type="range" min="0" max="400" step="5" value="35"></div>
+          <div class="control"><div class="top"><label for="filterMs">〰 סינון רעידות חיישן</label><output id="filterMsOut">15ms</output></div><input id="filterMs" type="range" min="0" max="240" step="5" value="15"></div>
+          <div class="control"><div class="top"><label for="deadzoneDeg">🎯 אזור מת</label><output id="deadzoneDegOut">0.5°</output></div><input id="deadzoneDeg" type="range" min="0" max="8" step="0.5" value="0.5"></div>
+          <div class="control"><div class="top"><label for="returnMs">↩ חזרה למרכז</label><output id="returnMsOut">140ms</output></div><input id="returnMs" type="range" min="0" max="600" step="10" value="140"></div>
+        </div>
+        <div class="field" style="margin:9px 0 0"><label for="fxRefresh">🎨 תדירות רענון תאורה (Performance)</label><select id="fxRefresh"><option value="60">High — עד 60 עדכוני תאורה/שנייה</option><option value="30" selected>Balanced — עד 30 עדכונים/שנייה</option><option value="15">Battery Saver — עד 15 עדכונים/שנייה</option></select></div>
+        <div class="motion-readout"><span id="motionFps">FPS —</span><span id="motionDelta">Input —</span></div>
+        <p class="motion-explain">0ms = תגובה מיידית. זמן תגובה וסינון גבוהים יותר = יותר החלקה, אבל גם יותר שיהוי. <b>Return</b> שולט בחזרה למרכז כשמפסיקים לגרור (לא מזיז חיישן פעיל למרכז).</p>
+      </div>
       <div class="sep"></div>
       <div class="orientation"><p class="sectiontitle">הטיה ידנית · X / Y</p><div class="range-grid"><div class="control"><div class="top"><label for="xRange">ימינה / שמאלה</label><output id="xRangeOut">0%</output></div><input id="xRange" type="range" min="-100" max="100" value="0"></div><div class="control"><div class="top"><label for="yRange">למעלה / למטה</label><output id="yRangeOut">0%</output></div><input id="yRange" type="range" min="-100" max="100" value="0"></div></div></div>
       <div class="help-banner"><strong>Two independent tests</strong><span><b>① Test FX</b> moves the card automatically. If it moves, rendering works. <b>② Connect phone tilt</b> checks actual browser sensor events. Run ② on a published HTTPS page (not a downloaded file).</span></div>
@@ -185,7 +226,7 @@ permission: not requested</pre>
         <p class="hint">Real sensor data is counted ONLY when Android sends actual events. The FX self-test is labeled SIMULATION and never adds to these counters. For the real test, open this as a standalone HTTPS website.</p>
       </section>
       <div class="message" id="message" aria-live="polite">בטלפון: לחץ על ״הפעל חיישן הטיה״ ואשר גישה לתנועה. אם הדפדפן לא מאפשר חיישנים, הפקדים הידניים וגרירה עדיין עובדים.</div>
-      <p class="footer"><b>טיפ:</b> התחל ב־Main Profile ובדוק שריון / קצוות. ניתן גם להנמיך את עוצמת הצבע ולשנות את מצב ה־Blend כדי לקבל מראה של קלף foil אמיתי. התמונה שמועלת נשארת בדפדפן.</p>
+      <p class="footer"><b>פרטיות:</b> התמונות נשמרות רק בזיכרון הלשונית. אחרי רענון צריך לבחור אותן מחדש. ההגדרות נשמרות במכשיר באמצעות Local Storage. <b>טיפ:</b> התחל ב־Main Profile ובדוק שריון / קצוות. ניתן גם להנמיך את עוצמת הצבע ולשנות את מצב ה־Blend כדי לקבל מראה של קלף foil אמיתי. התמונה שמועלת נשארת בדפדפן.</p>
     </aside>
   </main>
 </div>
@@ -197,24 +238,28 @@ permission: not requested</pre>
   const fmt = n => Number.isFinite(n) ? Number(n).toFixed(2) : '—';
   const card=$('card'),zone=$('zone'),art=$('art'),foil=$('foil'),iri=$('iri'),glint=$('glint'),sheen=$('sheen'),fxMask=$('fxMask');
   const ids=['foilAmount','shineAmount','depth','parallax','bands','sensitivity'];
+  const motionIds=['responseMs','filterMs','deadzoneDeg','returnMs'];
+  const motionPresets={direct:{responseMs:0,filterMs:0,deadzoneDeg:0,returnMs:0},responsive:{responseMs:35,filterMs:15,deadzoneDeg:.5,returnMs:140},balanced:{responseMs:110,filterMs:45,deadzoneDeg:1.5,returnMs:240},cinematic:{responseMs:230,filterMs:90,deadzoneDeg:2.5,returnMs:410}};
+  const allIds=[...ids,...motionIds];
   // The following values are intentionally kept equal to the user's chosen Main Profile.
-  const mainOriginal={foilAmount:74,shineAmount:68,depth:16,parallax:13,bands:4,sensitivity:35,blend:'soft-light',mask:'armor'};
+  const mainOriginal={foilAmount:74,shineAmount:68,depth:16,parallax:13,bands:4,sensitivity:35,blend:'soft-light',mask:'armor',fxRefresh:30,...motionPresets.responsive};
   let stored=null;
-  try { stored=JSON.parse(localStorage.getItem('prism-tilt-main-v3') || localStorage.getItem('prism-tilt-main-v2') || 'null'); } catch {}
+  try { stored=JSON.parse(localStorage.getItem('prism-tilt-main-v4') || localStorage.getItem('prism-tilt-main-v3') || localStorage.getItem('prism-tilt-main-v2') || 'null'); } catch {}
   const main=(stored && Number.isFinite(stored.foilAmount)) ? {...mainOriginal,...stored} : {...mainOriginal};
-  const presets={main,holo:{...mainOriginal,blend:'screen',mask:'full'},subtle:{foilAmount:29,shineAmount:33,depth:9,parallax:5,bands:3,sensitivity:40,blend:'soft-light',mask:'spot'},foil:{foilAmount:51,shineAmount:87,depth:13,parallax:8,bands:7,sensitivity:37,blend:'overlay',mask:'armor'},neon:{foilAmount:100,shineAmount:96,depth:25,parallax:24,bands:6,sensitivity:30,blend:'color-dodge',mask:'full'}};
+  const presets={main,holo:{...mainOriginal,blend:'screen',mask:'full'},subtle:{...mainOriginal,foilAmount:29,shineAmount:33,depth:9,parallax:5,bands:3,sensitivity:40,blend:'soft-light',mask:'spot'},foil:{...mainOriginal,foilAmount:51,shineAmount:87,depth:13,parallax:8,bands:7,sensitivity:37,blend:'overlay',mask:'armor'},neon:{...mainOriginal,foilAmount:100,shineAmount:96,depth:25,parallax:24,bands:6,sensitivity:30,blend:'color-dodge',mask:'full'}};
   const state={x:0,y:0,tx:0,ty:0,drag:false,compare:false,sensor:false,simulation:false,simToken:0,
     baseOrientation:null,baseGravity:null,rawOrientation:null,rawGravity:null,
     orientationCount:0,orientationValid:0,absoluteCount:0,motionCount:0,motionValid:0,
     lastOrientationAt:0,lastMotionAt:0,lastInputAt:0,seenMovement:false,
     orientationMoved:false,gravityMoved:false,source:'none',permission:'not requested',startTime:0,
-    permissionError:null,reduced:window.matchMedia('(prefers-reduced-motion: reduce)').matches};
+    permissionError:null,reduced:window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    filterX:0,filterY:0,filterLast:0,filterSource:'none',returning:false,lastUiUpdate:0,lastGradientAt:0,lastFrameAt:0,frameCount:0,fps:0};
   const read=id=>Number($(id).value);
   function report(msg){$('message').textContent=msg}
   function verdict(msg, kind=''){const el=$('sensorVerdict');el.className='sensor-verdict '+kind;$('verdictText').textContent=msg;}
   function modeLabel(s,on=false){$('status').textContent=s;$('status').classList.toggle('on',on)}
-  function outputs(){const units={foilAmount:'%',shineAmount:'%',depth:'°',parallax:'px',bands:'',sensitivity:''};
-    ids.forEach(id=>$(id+'Out').textContent=$(id).value+units[id]);
+  function outputs(){const units={foilAmount:'%',shineAmount:'%',depth:'°',parallax:'px',bands:'',sensitivity:'',responseMs:'ms',filterMs:'ms',deadzoneDeg:'°',returnMs:'ms'};
+    allIds.forEach(id=>$(id+'Out').textContent=$(id).value+units[id]);
     $('xRangeOut').textContent=$('xRange').value+'%';$('yRangeOut').textContent=$('yRange').value+'%';}
   function applySettings(){outputs();const width=330-(read('bands')-1)*34;
     foil.style.setProperty('--stripe',width+'px');[.17,.34,.51,.68,.85].forEach((k,i)=>foil.style.setProperty('--s'+(i+1),Math.round(width*k)+'px'));
@@ -231,42 +276,58 @@ permission: not requested</pre>
     fxMask.style.webkitMaskImage=rule;fxMask.style.maskImage=rule;
     document.querySelectorAll('.mask-choice').forEach(b=>{b.classList.toggle('active',b.dataset.mask===mode);b.setAttribute('aria-pressed',String(b.dataset.mask===mode));});
     if(mode==='custom' && !maskURL)report('Choose a transparent PNG mask. Opaque pixels receive the effect.');}
-  function capture(){return {...Object.fromEntries(ids.map(id=>[id,read(id)])),blend:$('blend').value,mask:currentMask}}
-  function preset(p){if(!p)return;ids.forEach(id=>$(id).value=p[id]);$('blend').value=p.blend;maskStyle(p.mask||'full');applySettings()}
+  function capture(){return {...Object.fromEntries(allIds.map(id=>[id,read(id)])),blend:$('blend').value,mask:currentMask,fxRefresh:read('fxRefresh')}}
+  function identifyMotionPreset(){const p=Object.keys(motionPresets).find(k=>motionIds.every(id=>read(id)===motionPresets[k][id]));$('motionPreset').value=p||'custom'}
+  function preset(p){if(!p)return;allIds.forEach(id=>{if(Number.isFinite(p[id]))$(id).value=p[id]});$('blend').value=p.blend;$('fxRefresh').value=p.fxRefresh||30;maskStyle(p.mask||'full');applySettings();identifyMotionPreset()}
+  $('motionPreset').addEventListener('change',()=>{const p=motionPresets[$('motionPreset').value];if(!p)return;motionIds.forEach(id=>$(id).value=p[id]);applySettings();state.filterLast=0;report('Motion profile: '+$('motionPreset').selectedOptions[0].textContent)});
+  motionIds.forEach(id=>$(id).addEventListener('input',()=>{outputs();$('motionPreset').value='custom';state.filterLast=0}));
   document.querySelectorAll('.mask-choice').forEach(b=>b.addEventListener('click',()=>{maskStyle(b.dataset.mask);$('preset').value='custom'}));
   ids.forEach(id=>$(id).addEventListener('input',()=>{applySettings();$('preset').value='custom'}));
   $('blend').addEventListener('change',()=>{applySettings();$('preset').value='custom'});
   $('preset').addEventListener('change',()=>preset(presets[$('preset').value]));
-  $('saveMain').addEventListener('click',()=>{Object.assign(main,capture());try{localStorage.setItem('prism-tilt-main-v3',JSON.stringify(main));report('Main Profile saved locally on this device.')}catch{report('Main Profile saved for this tab only (localStorage unavailable).')}$('preset').value='main'});
-  $('resetMain').addEventListener('click',()=>{Object.assign(main,mainOriginal);try{localStorage.removeItem('prism-tilt-main-v3');localStorage.removeItem('prism-tilt-main-v2')}catch{}$('preset').value='main';preset(main);report('Main Profile restored to 74 / 68 / 16° / 13px / 4 / 35 · Soft Light.');});
+  $('saveMain').addEventListener('click',()=>{Object.assign(main,capture());try{localStorage.setItem('prism-tilt-main-v4',JSON.stringify(main));report('Main Profile saved locally on this device.')}catch{report('Main Profile saved for this tab only (localStorage unavailable).')}$('preset').value='main'});
+  $('resetMain').addEventListener('click',()=>{Object.assign(main,mainOriginal);try{localStorage.removeItem('prism-tilt-main-v4');localStorage.removeItem('prism-tilt-main-v3');localStorage.removeItem('prism-tilt-main-v2')}catch{}$('preset').value='main';preset(main);report('Main Profile restored to 74 / 68 / 16° / 13px / 4 / 35 · Soft Light.');});
   $('maskFile').addEventListener('change',e=>{const f=e.target.files?.[0];if(!f)return;
     if(!['image/png','image/webp'].includes(f.type)||f.size>10*1024*1024){report('Use a PNG or WebP mask smaller than 10MB.');return}
     if(maskURL)URL.revokeObjectURL(maskURL);maskURL=URL.createObjectURL(f);$('preset').value='custom';maskStyle('custom');report('Custom mask loaded locally.');});
+  function refreshPhoto(){const img=$('uploadedImage');img.style.objectFit=$('imageFit').value;
+    img.style.objectPosition=$('photoX').value+'% '+$('photoY').value+'%';img.style.transform='scale('+(read('photoZoom')/100).toFixed(2)+')';
+    $('photoZoomOut').textContent=$('photoZoom').value+'%';$('photoXOut').textContent=$('photoX').value+'%';$('photoYOut').textContent=$('photoY').value+'%';
+    card.classList.toggle('photo-clean',!!imageURL&&$('cleanPhoto').checked);}
+  $('choosePhotoBtn').addEventListener('click',()=>$('imageFile').click());
+  $('demoPhotoBtn').addEventListener('click',()=>{if(imageURL)URL.revokeObjectURL(imageURL);imageURL=null;$('imageFile').value='';$('uploadedImage').removeAttribute('src');$('uploadedImage').style.display='none';$('demoArt').style.display='block';$('demoPhotoBtn').disabled=true;card.classList.remove('photo-clean');maskStyle('armor');report('Restored sample illustration.');});
+  ['photoZoom','photoX','photoY','imageFit','cleanPhoto'].forEach(id=>$(id).addEventListener(id==='cleanPhoto'?'change':'input',refreshPhoto));
   $('imageFile').addEventListener('change',e=>{const f=e.target.files?.[0];if(!f)return;
-    if(!f.type.startsWith('image/')||f.size>25*1024*1024){report('Use an image smaller than 25MB.');return}
-    if(imageURL)URL.revokeObjectURL(imageURL);imageURL=URL.createObjectURL(f);$('uploadedImage').src=imageURL;$('uploadedImage').style.display='block';$('demoArt').style.display='none';
-    // The armor-shaped demo mask is not aligned with the user's uploaded portrait.
+    if(!f.type.startsWith('image/')||f.size>25*1024*1024){report('Use a JPG, PNG or WebP image smaller than 25MB.');return}
+    if(imageURL)URL.revokeObjectURL(imageURL);imageURL=URL.createObjectURL(f);$('uploadedImage').src=imageURL;$('uploadedImage').style.display='block';$('demoArt').style.display='none';$('demoPhotoBtn').disabled=false;
+    // The armor-shaped demo mask is not aligned with a personal portrait.
     if(currentMask==='armor'){maskStyle('spot');$('preset').value='custom'}
-    report('Photo loaded locally. Switched demo armor mask to Spot so the prism remains visible on YOUR photo.');});
+    refreshPhoto();report('Your photo is displayed LOCALLY. Adjust zoom, crop, selective mask and response time. The photo is never uploaded.');});
   function syncManual(){$('xRange').value=Math.round(state.tx*100);$('yRange').value=Math.round(state.ty*100);outputs()}
   function stopSimulation(){state.simToken++;state.simulation=false;$('testFxBtn').classList.remove('running');$('testFxBtn').textContent='🧪 Test FX (no sensor)'}
   function stopSensor(message){state.sensor=false;window.removeEventListener('deviceorientation',onOrientation);window.removeEventListener('deviceorientationabsolute',onAbsolute);window.removeEventListener('devicemotion',onMotion);
-    state.baseOrientation=null;state.baseGravity=null;$('sensorBtn').textContent='📱 Connect phone tilt';$('sensorBtn').classList.remove('live');modeLabel('Touch / mouse');if(message)report(message)}
-  function manual(){if(state.sensor)stopSensor('Switched to manual input.');if(state.simulation)stopSimulation();state.tx=read('xRange')/100;state.ty=read('yRange')/100;outputs()}
+    state.baseOrientation=null;state.baseGravity=null;state.filterLast=0;state.filterSource='none';$('sensorBtn').textContent='📱 Connect phone tilt';$('sensorBtn').classList.remove('live');modeLabel('Touch / mouse');if(message)report(message)}
+  function manual(){if(state.sensor)stopSensor('Switched to manual input.');if(state.simulation)stopSimulation();state.returning=false;state.tx=read('xRange')/100;state.ty=read('yRange')/100;outputs()}
   $('xRange').addEventListener('input',manual);$('yRange').addEventListener('input',manual);
-  function pointer(e){const r=zone.getBoundingClientRect();state.tx=clamp(((e.clientX-r.left)/r.width-.5)*2);state.ty=clamp(((e.clientY-r.top)/r.height-.5)*2);syncManual()}
+  function pointer(e){const r=zone.getBoundingClientRect();state.returning=false;state.tx=clamp(((e.clientX-r.left)/r.width-.5)*2);state.ty=clamp(((e.clientY-r.top)/r.height-.5)*2);syncManual()}
   zone.addEventListener('pointerdown',e=>{if(state.sensor)stopSensor('Switched to pointer input.');if(state.simulation)stopSimulation();state.drag=true;try{zone.setPointerCapture(e.pointerId)}catch{}pointer(e)});
   zone.addEventListener('pointermove',e=>{if(state.sensor||state.simulation||(e.pointerType==='touch'&&!state.drag))return;pointer(e)});
   zone.addEventListener('pointerup',()=>state.drag=false);zone.addEventListener('pointercancel',()=>state.drag=false);
-  zone.addEventListener('pointerleave',()=>{if(!state.sensor&&!state.drag&&!state.simulation){state.tx=state.ty=0;syncManual()}});
+  zone.addEventListener('pointerleave',()=>{if(!state.sensor&&!state.drag&&!state.simulation){state.tx=state.ty=0;state.returning=true;syncManual()}});
   function screenTransform(x,y){const a=((screen.orientation?.angle??window.orientation??0)+360)%360;
     if(a===90)return [y,-x];if(a===270)return [-y,x];if(a===180)return [-x,-y];return [x,y]}
   function shortestAngleDelta(a,b){return ((a-b+540)%360)-180}
+  function angleToTarget(degrees){const dead=read('deadzoneDeg'),distance=Math.abs(degrees);
+    if(distance<=dead)return 0;return Math.sign(degrees)*clamp((distance-dead)/Math.max(1,read('sensitivity')-dead),0,1)}
   function applyTilt(x,y,source){if(!state.sensor)return;[x,y]=screenTransform(clamp(x),clamp(y));
-    state.tx=x;state.ty=y;state.source=source;syncManual();state.lastInputAt=performance.now();
+    const now=performance.now(),tau=read('filterMs');
+    if(state.filterSource!==source||!state.filterLast){state.filterX=x;state.filterY=y;state.filterLast=now;state.filterSource=source;}
+    else{const delta=clamp(now-state.filterLast,4,250);state.filterLast=now;
+      const k=tau<=0?1:1-Math.exp(-delta/tau);state.filterX+=(x-state.filterX)*k;state.filterY+=(y-state.filterY)*k;}
+    state.tx=state.filterX;state.ty=state.filterY;const changed=state.source!==source;state.source=source;state.lastInputAt=now;state.returning=false;
     if(Math.max(Math.abs(x),Math.abs(y))>.04)state.seenMovement=true;
-    modeLabel(source==='gravity fallback'?'Gravity fallback LIVE':'Orientation LIVE',true);
-    $('diagState').textContent='LIVE ✓';verdict('LIVE sensor data → '+source+'. Tilt now controls the Prism.', 'good');}
+    if(changed){modeLabel(source==='gravity fallback'?'Gravity fallback LIVE':'Orientation LIVE',true);$('diagState').textContent='LIVE ✓';verdict('LIVE sensor data → '+source+'. Tilt now controls the Prism.', 'good');}
+  }
   function onOrientation(e){readOrientation(e,'orientation')}
   function onAbsolute(e){readOrientation(e,'orientationabsolute')}
   function readOrientation(e,source){if(!state.sensor)return;
@@ -279,8 +340,8 @@ permission: not requested</pre>
     if(source==='orientation')state.lastOrientationAt=now;
     else if(now-state.lastOrientationAt<1200)return;
     if(!state.baseOrientation)state.baseOrientation={beta:e.beta,gamma:e.gamma};
-    const b=state.baseOrientation,d=read('sensitivity');
-    const x=clamp((e.gamma-b.gamma)/d),y=clamp(shortestAngleDelta(e.beta,b.beta)/d);
+    const b=state.baseOrientation;
+    const x=angleToTarget(e.gamma-b.gamma),y=angleToTarget(shortestAngleDelta(e.beta,b.beta));
     if(Math.max(Math.abs(x),Math.abs(y))>.025)state.orientationMoved=true;
     // If the orientation API returns constant values but gravity is changing, allow motion fallback.
     if(!state.orientationMoved&&state.gravityMoved&&now-state.startTime>1500)return;
@@ -293,8 +354,8 @@ permission: not requested</pre>
     const gx=Math.atan2(g.x,Math.hypot(g.y,g.z))*180/Math.PI;
     const gy=Math.atan2(g.y,Math.hypot(g.x,g.z))*180/Math.PI;
     if(!state.baseGravity)state.baseGravity={gx,gy};
-    const x=clamp((gx-state.baseGravity.gx)/read('sensitivity'));
-    const y=clamp((gy-state.baseGravity.gy)/read('sensitivity'));
+    const x=angleToTarget(gx-state.baseGravity.gx);
+    const y=angleToTarget(gy-state.baseGravity.gy);
     if(Math.max(Math.abs(x),Math.abs(y))>.025)state.gravityMoved=true;
     const recentOrientation=(performance.now()-state.lastOrientationAt<1100);
     if(recentOrientation && (state.orientationMoved || !state.gravityMoved))return;
@@ -359,10 +420,11 @@ permission: not requested</pre>
     state.permission='checking';state.permissionError=null;
     // Trigger permission while the original click user activation still exists.
     const permissions=await permissionsRequested();
-    if(/denied|NotAllowedError|SecurityError/.test(permissions) &&
-      !(/granted|not required/.test(permissions))){
-      verdict('SENSOR PERMISSION DENIED: '+permissions,'fail');report('Enable motion sensors for this page in browser site settings.');return;}
-    state.sensor=true;state.baseOrientation=null;state.baseGravity=null;state.rawOrientation=null;state.rawGravity=null;
+    if(/denied|NotAllowedError|SecurityError/.test(permissions)){
+      verdict('A permission request was denied ('+permissions+'). Listening for any available sensor API…','warn');
+      report('Some browsers reject permission requests for one API even if the other works. Checking event counters before deciding.');
+    }
+    state.sensor=true;state.baseOrientation=null;state.baseGravity=null;state.filterLast=0;state.filterSource='none';state.rawOrientation=null;state.rawGravity=null;
     state.orientationCount=0;state.orientationValid=0;state.absoluteCount=0;state.motionCount=0;state.motionValid=0;
     state.lastOrientationAt=0;state.lastMotionAt=0;state.lastInputAt=0;state.seenMovement=false;
     state.orientationMoved=false;state.gravityMoved=false;state.source='none';state.tx=0;state.ty=0;state.startTime=performance.now();
@@ -387,7 +449,7 @@ permission: not requested</pre>
       if(t<6)requestAnimationFrame(tick);else{stopSimulation();state.tx=state.ty=0;modeLabel('Touch / mouse');verdict(verified?'FX self-test PASS: the card transform changed. Now test real phone tilt.':'FX self-test FAIL: renderer transform did not update.',verified?'good':'fail');report('Self-test complete. Real sensor counters remain unchanged.');}}
     requestAnimationFrame(tick);
   });
-  $('recenterBtn').addEventListener('click',()=>{state.tx=state.ty=0;state.x=state.y=0;state.baseOrientation=null;state.baseGravity=null;state.orientationMoved=false;state.gravityMoved=false;state.seenMovement=false;syncManual();
+  $('recenterBtn').addEventListener('click',()=>{state.tx=state.ty=0;state.x=state.y=0;state.baseOrientation=null;state.baseGravity=null;state.filterLast=0;state.filterSource='none';state.orientationMoved=false;state.gravityMoved=false;state.seenMovement=false;syncManual();
     report(state.sensor?'Recalibrated. Current phone position becomes zero at the next sample.':'Recentered manual tilt.');});
   $('compareBtn').addEventListener('click',()=>{state.compare=!state.compare;card.classList.toggle('compare',state.compare);$('compareBtn').classList.toggle('before',state.compare);$('compareBtn').textContent=state.compare?'◧ חזור לאפקט':'◧ הצג מקור'});
   window.addEventListener('keydown',e=>{if(e.target.matches('input,select,button'))return;const d=.12;
@@ -406,26 +468,49 @@ permission: not requested</pre>
     $('diagRaw').textContent=diagText();
   }
   $('copyDiag').addEventListener('click',async()=>{
-    updateDiag();const payload=['PRISM TILT LAB v3',
+    updateDiag();const payload=['PRISM TILT LAB v4',
       'url_protocol='+location.protocol+' secureContext='+isSecureContext+' iframe='+(self!==top),
       'userAgent='+navigator.userAgent,'policy='+$('diagPolicy').textContent,
       'sensorEnabled='+state.sensor+' simulation='+state.simulation,
       'orientationCount='+state.orientationCount+' valid='+state.orientationValid+' absoluteCount='+state.absoluteCount,
       'motionCount='+state.motionCount+' valid='+state.motionValid,
-      'movement='+state.seenMovement+' source='+state.source,'verdict='+$('verdictText').textContent,diagText()].join('\n');
+      'movement='+state.seenMovement+' source='+state.source,'motionSettings='+JSON.stringify(Object.fromEntries(motionIds.map(id=>[id,read(id)]))),'verdict='+$('verdictText').textContent,diagText()].join('\n');
     try{await navigator.clipboard.writeText(payload);report('Copied diagnostics. Paste the report into our chat.');}
     catch{const ta=document.createElement('textarea');ta.value=payload;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();report('Copied diagnostics (legacy clipboard fallback).')}});
-  function render(){const smooth=state.reduced?1:.13;state.x+=(state.tx-state.x)*smooth;state.y+=(state.ty-state.y)*smooth;
-    const d=read('depth'),p=read('parallax');card.style.transform=state.compare?'none':`rotateX(${(-state.y*d).toFixed(2)}deg) rotateY(${(state.x*d).toFixed(2)}deg)`;
+  // The v3 fixed per-frame blend (.13) caused noticeable lag and depended on frame rate.
+  // In v4 the exponential response uses elapsed time: consistent at 30, 60 and 120Hz.
+  let priorFrame=0,priorFpsStamp=0;
+  function render(now){
+    if(!Number.isFinite(now))now=performance.now();
+    const dt=priorFrame?clamp(now-priorFrame,0,90):16.67;priorFrame=now;
+    const duration=state.returning&&!state.sensor?read('returnMs'):read('responseMs');
+    const alpha=(state.reduced||duration<=0)?1:(1-Math.exp(-dt/duration));
+    state.x+=(state.tx-state.x)*alpha;state.y+=(state.ty-state.y)*alpha;
+    if(Math.abs(state.x-state.tx)<.0003)state.x=state.tx;
+    if(Math.abs(state.y-state.ty)<.0003)state.y=state.ty;
+    const d=read('depth'),p=read('parallax');
+    card.style.transform=state.compare?'none':`rotateX(${(-state.y*d).toFixed(2)}deg) rotateY(${(state.x*d).toFixed(2)}deg)`;
     art.style.transform=`translate(${(state.x*p).toFixed(2)}px,${(state.y*p).toFixed(2)}px) scale(1.08)`;
     foil.style.transform=`translate(${(-state.x*52).toFixed(1)}px,${(-state.y*52).toFixed(1)}px) rotate(${(state.x*9).toFixed(2)}deg)`;
-    card.style.setProperty('--hx',(50+state.x*39).toFixed(1)+'%');card.style.setProperty('--hy',(40+state.y*43).toFixed(1)+'%');
-    card.style.setProperty('--angle',(30+state.x*80+state.y*25).toFixed(1)+'deg');
+    // Separate fast compositor transforms from heavier paint-driven gradient updates.
+    if(now-state.lastGradientAt >= 1000/read('fxRefresh')){
+      card.style.setProperty('--hx',(50+state.x*39).toFixed(1)+'%');card.style.setProperty('--hy',(40+state.y*43).toFixed(1)+'%');
+      card.style.setProperty('--angle',(30+state.x*80+state.y*25).toFixed(1)+'deg');
+      state.lastGradientAt=now;
+    }
     sheen.style.transform=`translateX(${(state.x*90).toFixed(1)}px)`;
-    $('coords').textContent=`X ${(state.x*d).toFixed(0)}° · Y ${(state.y*d).toFixed(0)}°`;
+    state.frameCount++;
+    if(now-state.lastUiUpdate>140){
+      $('coords').textContent=`X ${(state.x*d).toFixed(0)}° · Y ${(state.y*d).toFixed(0)}°`;
+      if(state.sensor)syncManual();
+      if(now-priorFpsStamp>650){state.fps=Math.round(1000*state.frameCount/(now-priorFpsStamp||1000));state.frameCount=0;priorFpsStamp=now}
+      $('motionFps').textContent='FPS '+state.fps;
+      $('motionDelta').textContent='Response '+read('responseMs')+'ms';
+      state.lastUiUpdate=now;
+    }
     requestAnimationFrame(render);
   }
-  preset(main);$('preset').value='main';environment();classify();updateDiag();setInterval(updateDiag,400);
+  preset(main);$('preset').value='main';refreshPhoto();environment();classify();updateDiag();setInterval(updateDiag,500);
   document.addEventListener('visibilitychange',()=>{if(document.hidden&&state.simulation)stopSimulation();if(!document.hidden)classify()});
   render();
 })();
