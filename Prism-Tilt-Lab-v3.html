@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Prism Tilt Lab v3 — Sensor Fix</title>
+<style>
+:root {color-scheme: dark; font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif; background:#090b15; color:#f5f4ff}
+* {box-sizing:border-box} body {margin:0; min-height:100vh; background: radial-gradient(ellipse at 25% 0%,#251547 0%,transparent 40%),radial-gradient(ellipse at 90% 90%,#112743 0%,transparent 48%),#090b15;}
+button,select,input{font:inherit} button {cursor:pointer} .app {max-width:1070px;margin:auto;padding:22px 18px 30px}
+.header{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
+.kicker{color:#b9a9ff;font-size:11px;font-weight:900;letter-spacing:3px;direction:ltr;text-align:right}
+h1{margin:2px 0;font-size:clamp(25px,3.3vw,39px);letter-spacing:-1.2px;line-height:1.1;direction:ltr;text-align:right}
+h1 span{color:#e5fc6c}.sub{font-size:13px;color:#aaaec4;margin-top:5px;max-width:550px;line-height:1.5}
+.status{display:inline-flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid #3d3c56;border-radius:99px;color:#cbd0e4;font-size:12px;background:#171a2c}
+.status::before{content:"";width:7px;height:7px;border-radius:50%;background:#a5adc8;box-shadow:0 0 10px #a5adc844}.status.on::before{background:#baff7b;box-shadow:0 0 12px #baff7b}
+.workspace{display:grid;grid-template-columns:minmax(300px,1.1fr) minmax(310px,.9fr);gap:18px;align-items:stretch}
+.stage,.controls{border:1px solid #313247;background:linear-gradient(145deg,rgba(27,30,51,.93),rgba(13,16,31,.95));border-radius:22px;box-shadow:0 14px 50px #0006;overflow:hidden}
+.stage{padding:20px 14px 14px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:585px}
+.stage::before{content:"";position:absolute;inset:0;opacity:.3;pointer-events:none;background-image:linear-gradient(#777bff15 1px,transparent 1px),linear-gradient(90deg,#777bff15 1px,transparent 1px);background-size:32px 32px;mask-image:linear-gradient(#000,transparent 85%)}
+.stage-head{position:relative;display:flex;justify-content:space-between;align-self:stretch;align-items:center;gap:10px;z-index:2;margin-bottom:9px;padding:0 8px;font-size:11px;color:#a2a7bd}
+.stage-head strong{color:#e3e6ff;font-size:12px;letter-spacing:2px}.stage-head .coords{font-family:monospace;direction:ltr}
+.preview-zone{width:100%;position:relative;flex:1;min-height:415px;display:flex;align-items:center;justify-content:center;perspective:1100px;touch-action:none;user-select:none;cursor:grab}
+.preview-zone:active{cursor:grabbing}.halo{position:absolute;width:min(74%,330px);aspect-ratio:1;border-radius:50%;background:conic-gradient(from 0deg,#d24dff66,#12f3ff44,#f8ff6855,#c14fff55);filter:blur(66px);opacity:.42;pointer-events:none}
+.card{--hx:50%;--hy:40%;width:min(71%,290px);aspect-ratio:0.73;position:relative;overflow:hidden;border-radius:19px;border:1px solid #d4c5ff99;background:#07101c;box-shadow:0 24px 48px #000a, 0 0 0 5px #d9d1ff0d, inset 0 0 18px #f2d5ff80;transform-style:preserve-3d;will-change:transform;isolation:isolate}
+.art{position:absolute;inset:-5%;will-change:transform;transform:scale(1.08)}.art svg,.art img{width:100%;height:100%;display:block;object-fit:cover}.art img{position:absolute;inset:0;display:none}
+.vignette{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#080718bb 0%,transparent 23%,transparent 66%,#080718e8 100%)}
+.fx-mask{position:absolute;inset:0;pointer-events:none; -webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
+.foil{position:absolute;inset:-34%;background:repeating-linear-gradient(113deg,rgba(245,14,193,.62) 0px,rgba(245,14,193,.38) var(--s1,38px),rgba(20,230,255,.7) var(--s2,72px),rgba(179,255,70,.57) var(--s3,108px),rgba(255,181,29,.56) var(--s4,148px),rgba(145,58,255,.64) var(--s5,184px),rgba(245,14,193,.62) var(--stripe,228px));mix-blend-mode:screen;opacity:.74;will-change:transform;pointer-events:none;filter:saturate(1.5)}
+.iridescence{position:absolute;inset:0;background:conic-gradient(from var(--angle,30deg) at var(--hx) var(--hy),#ff1892,#1ce7ff,#cbff64,#ffba48,#9c48ff,#ff1892);mix-blend-mode:soft-light;opacity:.55;pointer-events:none}
+.glint{position:absolute;inset:0;background:radial-gradient(ellipse 55% 45% at var(--hx) var(--hy),#ffffffdf 0%,#d1ecff8f 14%,#b1a2ff25 35%,transparent 74%);mix-blend-mode:screen;opacity:.65;pointer-events:none}
+.sheen{position:absolute;inset:0;background:linear-gradient(124deg,transparent 30%,#ffffff10 42%,#ffffff88 49%,#ffffff1b 56%,transparent 68%);mix-blend-mode:screen;opacity:.25;will-change:transform;pointer-events:none}
+.grain{position:absolute;inset:0;background:repeating-linear-gradient(0deg,#fff1 0 1px,transparent 1px 4px);opacity:.28;pointer-events:none}
+.frame{position:absolute;inset:7px;border:1px solid #e9e5ff66;border-radius:13px;box-shadow:inset 0 0 1px #fff;pointer-events:none}
+.card-info{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:24px 22px 19px;pointer-events:none;text-shadow:0 2px 9px #000,0 1px 4px #000}
+.topline{display:flex;gap:6px;justify-content:space-between;align-items:flex-start;font-size:10px;letter-spacing:2px;font-weight:800;direction:ltr}.topline .rare{border:1px solid #f1e694;background:#ffffc022;color:#fff9c5;padding:4px 6px;border-radius:5px;font-size:9px}
+.bottomline{display:flex;flex-direction:column;direction:ltr;align-items:flex-start}.bottomline .class{font-size:10px;letter-spacing:3.4px;color:#e6caff;font-weight:bold}.bottomline .name{font-size:clamp(25px,3vw,31px);font-weight:1000;letter-spacing:-1.6px;line-height:1.15}.bottomline .desc{margin-top:6px;font-size:9px;letter-spacing:2px;color:#dce1f0;font-weight:700}
+.compare .fx-mask{opacity:0!important}.compare .art{filter:none!important}.compare{transform:none!important}
+.stage-hint{position:relative;z-index:2;text-align:center;color:#b2b8d0;font-size:12px;line-height:1.6;margin:5px 10px 0}
+.stage-actions{width:100%;display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:13px;position:relative;z-index:2}
+.btn{background:#262a42;border:1px solid #494e72;border-radius:11px;color:#ebefff;padding:10px 12px;font-size:12px;font-weight:750;transition:background .15s,transform .15s;white-space:nowrap}
+.btn:hover{background:#373c5e}.btn:active{transform:scale(.97)}.btn.primary{background:#d7fb68;border-color:#d7fb68;color:#182007}.btn.primary:hover{background:#edffb0}.btn.live{background:#344b2b;border-color:#93d66e;color:#d7ffd0}.btn.before{background:#645389;color:#fff}
+.controls{padding:18px}.control-h{display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:1px solid #32384e;padding-bottom:14px;margin-bottom:15px}
+.control-h strong{font-size:18px}.control-h small{color:#9198b4;letter-spacing:2px;font-size:10px;direction:ltr}
+.field{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}.field label{color:#c9cde1;font-size:12px;font-weight:700}.field select{width:100%;padding:11px;border-radius:10px;border:1px solid #454a66;background:#191d31;color:#fff;outline:none}
+.sliders{display:grid;grid-template-columns:1fr 1fr;gap:9px 15px}
+.control{min-width:0;padding:2px 0 9px}.control .top{display:flex;justify-content:space-between;gap:4px;align-items:center;margin-bottom:8px;font-size:12px}.control .top label{color:#c7cee7}.control output{color:#e1ff95;font:700 11px monospace;direction:ltr}
+input[type=range]{width:100%;accent-color:#d7fb68;cursor:pointer;margin:0;height:18px}
+.sep{height:1px;background:#33364b;margin:8px 0 15px}.sectiontitle{margin:0 0 12px;font-size:12px;font-weight:850;color:#a8b0ce;letter-spacing:.3px}
+.orientation{padding:12px;background:#101427;border-radius:14px;border:1px solid #32344d}.orientation .range-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.orientation .control{padding-bottom:0}
+.message{font-size:11px;color:#929bb9;line-height:1.55;margin:12px 2px 0;min-height:36px}
+.footer{font-size:11px;color:#8589a7;line-height:1.7;margin:15px 3px 0}.footer b{color:#c1c6df}
+ .diag{margin-top:16px;padding:14px;background:#0a1224;border:1px solid #435072;border-radius:16px}
+.diag-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:12px}
+.diag-head strong{font-size:14px;color:#edf3ff}.diag-head span{font-size:11px;color:#b9c5e9}
+.diag-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.diag-tile{background:#171e35;border:1px solid #303c61;border-radius:10px;padding:9px 10px;min-width:0}
+.diag-tile small{display:block;color:#97a9d1;font-size:10px;margin-bottom:4px}
+.diag-tile strong{display:block;font:700 12px/1.5 ui-monospace,monospace;color:#edffbc;direction:ltr;text-align:left;overflow-wrap:anywhere}
+.diag-line{font:11px/1.6 ui-monospace,monospace;direction:ltr;white-space:pre-wrap;overflow-wrap:anywhere;background:#080e1e;color:#b9c8eb;border:1px solid #2b3654;padding:10px;border-radius:9px;margin:10px 0 0}
+.diag .btn{margin-top:10px}.inline-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.hint{font-size:11px;color:#b8c4e2;line-height:1.65;margin:8px 0 0}
+.masks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.mask-choice{border:1px solid #444e70;border-radius:10px;min-height:42px;color:#d9e3fc;padding:8px 7px;background:#161c33;font-size:11px;font-weight:700;white-space:normal}.mask-choice.active{background:#342957;border-color:#c4a2ff;color:#fff}
+@media(max-width:750px){.app{padding:16px 11px 28px}.workspace{grid-template-columns:1fr;gap:12px}.stage{min-height:515px;padding:13px 10px}.preview-zone{min-height:375px}.card{width:min(64vw,270px)}.controls{padding:17px}.stage-hint{margin-top:0}.header{margin-bottom:13px}.sub{font-size:12px}.stage-head{margin-bottom:4px}}
+@media(max-width:390px){.sliders{gap:8px}.control .top{font-size:10px}.stage-actions .btn{font-size:11px;padding:9px}.card{width:min(72vw,250px)}.stage{min-height:480px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:0s!important;animation:none!important}}
+
+/* v3 diagnosis and test affordances */
+.sensor-verdict{width:calc(100% - 16px);margin:1px 8px 9px;padding:11px 13px;border:1px solid #4d5677;border-radius:12px;background:#171e37;color:#d7e3ff;display:flex;gap:10px;align-items:flex-start;font:600 12px/1.5 system-ui;direction:ltr;text-align:left;position:relative;z-index:2}
+.verdict-dot{display:inline-block;flex:none;width:9px;height:9px;margin-top:4px;border-radius:50%;background:#aeb9db;box-shadow:0 0 0 4px #aeb9db20}.sensor-verdict.good{background:#162b27;border-color:#3e896b;color:#d1ffe8}.sensor-verdict.good .verdict-dot{background:#91f6c9}.sensor-verdict.warn{background:#30231a;border-color:#94723a;color:#ffebc8}.sensor-verdict.warn .verdict-dot{background:#fcca6b}.sensor-verdict.fail{background:#33202a;border-color:#915064;color:#ffdce7}.sensor-verdict.fail .verdict-dot{background:#ff9eaf}
+.help-banner{display:flex;flex-direction:column;gap:8px;border:1px solid #5d4e87;background:linear-gradient(120deg,#292447,#151b33);padding:12px;border-radius:12px;color:#dadffc;font:12px/1.6 system-ui;margin-top:13px;direction:ltr;text-align:left}.help-banner strong{font-size:14px;color:#ecdcff}.help-banner b{color:#dffe96}
+#testFxBtn.running{background:#49366a;border-color:#ab7fe6;color:#f9e6ff}.btn:focus-visible,.mask-choice:focus-visible{outline:2px solid #d7fb68;outline-offset:3px}
+@media(max-width:750px){.stage{min-height:0}.sensor-verdict{font-size:11px}}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div><div class="kicker">MOTION FX LAB · EXPERIMENT 01</div><h1>PRISM <span>TILT</span></h1><div class="sub">אפקט הולוגרפי שמשנה צבע, ברק ועומק בהתאם לזווית הצפייה — בהשראת קלפי foil ומודים במשחקים.</div></div>
+    <div class="status" id="status">מצב מגע / עכבר</div>
+  </header>
+  <main class="workspace">
+    <section class="stage">
+      <div class="stage-head"><strong>LIVE PREVIEW</strong><span class="coords" id="coords">X 0° · Y 0°</span></div>
+      <div class="preview-zone" id="zone" aria-label="גררו או הזיזו את העכבר על הכרטיס כדי להטות אותו">
+        <div class="halo"></div>
+        <div class="card" id="card">
+          <div class="art" id="art">
+            <svg id="demoArt" viewBox="0 0 480 650" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+              <defs>
+                <radialGradient id="bg"><stop stop-color="#6c30ae"/><stop offset=".51" stop-color="#1b246b"/><stop offset="1" stop-color="#050d20"/></radialGradient>
+                <linearGradient id="armor" x1="0" x2="1" y2="1"><stop stop-color="#8aaee3"/><stop offset=".25" stop-color="#3b6f9f"/><stop offset=".57" stop-color="#172440"/><stop offset=".9" stop-color="#a3a0d4"/><stop offset="1" stop-color="#151f42"/></linearGradient>
+                <linearGradient id="bright" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f1c8ff"/><stop offset=".45" stop-color="#58d9ff"/><stop offset="1" stop-color="#481f9b"/></linearGradient>
+                <linearGradient id="cloak" x1="0" x2="1" y2="1"><stop stop-color="#17213d"/><stop offset=".5" stop-color="#7037a0"/><stop offset="1" stop-color="#0c1932"/></linearGradient>
+                <filter id="glow"><feGaussianBlur stdDeviation="6"/></filter>
+              </defs>
+              <rect width="480" height="650" fill="url(#bg)"/>
+              <circle cx="245" cy="258" r="183" fill="none" stroke="#a6d5ff" stroke-opacity=".22" stroke-width="2"/>
+              <circle cx="245" cy="258" r="142" fill="none" stroke="#e1b2ff" stroke-opacity=".3" stroke-dasharray="4 10"/>
+              <path d="M-50 120L480 480M-40 250L480 600M70 -40L520 220" stroke="#b6c7ff" stroke-opacity=".15" stroke-width="2"/>
+              <path d="M246 -50L282 140 222 180Z" fill="#a653e9" opacity=".45"/>
+              <path d="M0 400 160 330 90 660H0Z" fill="#503190" opacity=".6"/>
+              <path d="M480 325 320 303 378 650H480Z" fill="#1da8c0" opacity=".3"/>
+              <path d="M35 650 95 405 175 355 208 425 160 650Z" fill="url(#cloak)" stroke="#78e5ff" stroke-opacity=".35" stroke-width="2"/>
+              <path d="M445 650 383 405 307 355 270 425 318 650Z" fill="url(#cloak)" stroke="#f3aaff" stroke-opacity=".35" stroke-width="2"/>
+              <path d="M105 650 135 405 188 365 290 365 345 405 383 650Z" fill="url(#armor)" stroke="#8bbaf5" stroke-width="3"/>
+              <path d="M161 424 202 382 282 382 322 424 291 515 239 553 188 515Z" fill="#0b1c38" stroke="#7fc8e9" stroke-width="3"/>
+              <path d="M195 412 240 440 285 412 261 505 240 534 216 505Z" fill="url(#bright)" opacity=".8"/>
+              <path d="M240 437V539M194 480L240 513 284 480" fill="none" stroke="#f8f7ff" stroke-width="4" opacity=".7"/>
+              <path d="M175 370 143 323 151 229 184 158 242 118 300 159 335 236 335 321 305 372 240 405Z" fill="url(#armor)" stroke="#9ce9ff" stroke-width="4"/>
+              <path d="M181 164 159 91 219 137 240 116 261 137 321 91 302 164 339 208 299 187 240 165 181 187 142 208Z" fill="#163257" stroke="#96daff" stroke-width="4"/>
+              <path d="M175 220 240 181 307 220 298 290 279 353 240 379 201 353 183 290Z" fill="#0e1b35" stroke="#b2c7ff" stroke-width="3"/>
+              <path d="M193 230 235 242 219 276 193 264ZM286 230 247 242 261 276 286 264Z" fill="#b9fcff" filter="url(#glow)" opacity=".8"/>
+              <path d="M193 230 235 242 219 266 193 257ZM286 230 247 242 261 266 286 257Z" fill="#9efaff" stroke="#fff" stroke-width="1.5"/>
+              <path d="M222 282 240 296 259 282 253 314 240 331 227 314Z" fill="#32436c" stroke="#69dfff" stroke-width="2"/>
+              <path d="M208 338 240 354 272 338 251 373 240 382 229 373Z" fill="#6682bb"/>
+              <path d="M176 283 148 259 146 312 171 329ZM303 283 332 259 334 312 308 329Z" fill="#3a619c" stroke="#83f6ff" stroke-width="2"/>
+              <path d="M240 117 241 180 240 231" stroke="#dcf7ff" stroke-width="5" opacity=".7"/>
+              <path d="M100 430 121 480 145 458M380 430 358 480 335 458" stroke="#d1c0ff" opacity=".6" stroke-width="3" fill="none"/>
+              <circle cx="240" cy="275" r="182" fill="none" stroke="#bff6ff" stroke-width="1.5" stroke-opacity=".4" stroke-dasharray="45 14 3 14"/>
+              <path d="M65 205h80M335 205h85M70 335h60M350 335h60" stroke="#93e0ff" stroke-opacity=".7" stroke-width="2"/>
+              <circle cx="78" cy="206" r="4" fill="#bafcff"/><circle cx="412" cy="206" r="4" fill="#bafcff"/>
+            </svg>
+            <img id="uploadedImage" alt="תמונה שהועלתה לתצוגת הפריזם" />
+          </div>
+          <div class="vignette"></div><div class="fx-mask" id="fxMask"><div class="foil" id="foil"></div><div class="iridescence" id="iri"></div><div class="glint" id="glint"></div><div class="sheen" id="sheen"></div></div><div class="grain"></div><div class="frame"></div>
+          <div class="card-info"><div class="topline"><span>SPECIMEN // 001</span><span class="rare">PRISMATIC</span></div><div class="bottomline"><div class="class">HOLOGRAPHIC SERIES</div><div class="name">SPECTRAL<br/>SHIFT</div><div class="desc">MOVE TO REFRACT · POLYCHROME</div></div></div>
+        </div>
+      </div>
+      <div class="sensor-verdict" id="sensorVerdict" role="status" aria-live="polite"><span class="verdict-dot"></span><span id="verdictText">Ready. Test the visual effect first, then try the real sensor.</span></div>
+      <div class="stage-hint">הזז את העכבר או גרור עם האצבע על הכרטיס כדי לשנות זווית ותאורה</div>
+      <div class="stage-actions">
+        <button class="btn primary" id="sensorBtn" type="button">📱 Connect phone tilt</button>
+        <button class="btn" id="testFxBtn" type="button">🧪 Test FX (no sensor)</button>
+        <button class="btn" id="recenterBtn" type="button">⌖ איפוס / כיול</button>
+        <button class="btn" id="compareBtn" type="button">◧ הצג מקור</button>
+      </div>
+    </section>
+    <aside class="controls">
+      <div class="control-h"><strong>פקדי האפקט</strong><small>LIVE TUNING</small></div>
+      <div class="field"><label for="preset">מראה מוכן מראש</label><select id="preset"><option value="main" selected>★ Main Profile — הבחירה שלנו</option><option value="holo">🌈 Holographic — קשת צבעונית</option><option value="subtle">✨ Subtle — עדין</option><option value="foil">💿 Foil — מתכתי</option><option value="neon">🪩 Neon — זוהר מוגזם</option><option value="custom">⚙ Custom — התאמה אישית</option></select></div>
+      <div class="field"><label for="imageFile">תמונה לניסוי (מהמכשיר שלך)</label><input id="imageFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif" aria-label="העלה תמונה כדי לבדוק עליה אפקט פריזם" style="width:100%;max-width:100%;font-size:11px;color:#b7bfd9" /></div>
+      <div class="field"><label for="blend">שילוב הצבע על התמונה (Blend mode)</label><select id="blend"><option value="screen">Screen — בהיר וצבעוני</option><option value="overlay">Overlay — מדגיש ניגודיות</option><option value="soft-light">Soft light — עדין וטבעי</option><option value="color-dodge">Color dodge — זוהר חזק</option></select></div>
+      <div class="sep"></div>
+      <p class="sectiontitle">🎭 Prism Selective — בחירת אזורים</p>
+      <div class="masks" id="maskGroup" role="group" aria-label="אזורי השתקפות">
+        <button class="mask-choice" type="button" data-mask="full">▣ כל התמונה</button>
+        <button class="mask-choice active" type="button" data-mask="armor">⬡ שריון / מתכת</button>
+        <button class="mask-choice" type="button" data-mask="edges">◌ קצוות בלבד</button>
+        <button class="mask-choice" type="button" data-mask="spot">◉ נקודת אור נעה</button>
+        <button class="mask-choice" type="button" data-mask="custom">▧ מסכה אישית</button>
+      </div>
+      <div class="field" style="margin:12px 0 10px"><label for="maskFile">קובץ מסכה (PNG שקוף, אזור אטום = אפקט)</label><input id="maskFile" type="file" accept="image/png,image/webp" style="width:100%;max-width:100%;font-size:11px;color:#b7bfd9"/></div>
+      <p class="hint">מצב שריון מותאם לאיור הדוגמה. לתמונה שלך אפשר להעלות מסכת שקיפות נפרדת; הגוון המקורי מחוץ למסכה נשמר.</p>
+      <div class="inline-actions" style="margin:12px 0 4px"><button class="btn" id="saveMain" type="button">★ שמור כ־Main</button><button class="btn" id="resetMain" type="button">↶ שחזר Main מקורי</button></div>
+      <div class="sep"></div>
+      <p class="sectiontitle">צבע, אור ותנועה</p>
+      <div class="sliders">
+        <div class="control"><div class="top"><label for="foilAmount">🌈 עוצמת פריזם</label><output id="foilAmountOut">74%</output></div><input id="foilAmount" type="range" min="0" max="100" value="74"></div>
+        <div class="control"><div class="top"><label for="shineAmount">☀️ עוצמת ברק</label><output id="shineAmountOut">68%</output></div><input id="shineAmount" type="range" min="0" max="100" value="68"></div>
+        <div class="control"><div class="top"><label for="depth">🧊 עומק תלת־ממדי</label><output id="depthOut">16°</output></div><input id="depth" type="range" min="0" max="30" value="16"></div>
+        <div class="control"><div class="top"><label for="parallax">↗️ תזוזת התמונה</label><output id="parallaxOut">13px</output></div><input id="parallax" type="range" min="0" max="30" value="13"></div>
+        <div class="control"><div class="top"><label for="bands">〰️ צפיפות פסי צבע</label><output id="bandsOut">4</output></div><input id="bands" type="range" min="1" max="8" value="4"></div>
+        <div class="control"><div class="top"><label for="sensitivity">📱 רגישות הטיה</label><output id="sensitivityOut">35</output></div><input id="sensitivity" type="range" min="10" max="80" value="35"></div>
+      </div>
+      <div class="sep"></div>
+      <div class="orientation"><p class="sectiontitle">הטיה ידנית · X / Y</p><div class="range-grid"><div class="control"><div class="top"><label for="xRange">ימינה / שמאלה</label><output id="xRangeOut">0%</output></div><input id="xRange" type="range" min="-100" max="100" value="0"></div><div class="control"><div class="top"><label for="yRange">למעלה / למטה</label><output id="yRangeOut">0%</output></div><input id="yRange" type="range" min="-100" max="100" value="0"></div></div></div>
+      <div class="help-banner"><strong>Two independent tests</strong><span><b>① Test FX</b> moves the card automatically. If it moves, rendering works. <b>② Connect phone tilt</b> checks actual browser sensor events. Run ② on a published HTTPS page (not a downloaded file).</span></div>
+      <section class="diag" aria-label="אבחון חיישנים">
+        <div class="diag-head"><strong>🩺 Sensor Diagnostics</strong><span id="diagState">ממתין להפעלה</span></div>
+        <div class="diag-grid">
+          <div class="diag-tile"><small>Secure origin</small><strong id="diagHttps">—</strong></div>
+          <div class="diag-tile"><small>Embedded frame</small><strong id="diagFrame">—</strong></div>
+          <div class="diag-tile"><small>Sensor policy</small><strong id="diagPolicy">—</strong></div>
+          <div class="diag-tile"><small>Source</small><strong id="diagSource">None</strong></div>
+          <div class="diag-tile"><small>Orientation events</small><strong id="diagOCount">0</strong></div>
+          <div class="diag-tile"><small>Motion events</small><strong id="diagMCount">0</strong></div>
+        </div>
+        <div class="diag-grid" style="margin-top:8px"><div class="diag-tile"><small>Sensor permission</small><strong id="diagPermission">not requested</strong></div><div class="diag-tile"><small>Usable movement</small><strong id="diagMovement">not tested</strong></div></div>
+        <pre class="diag-line" id="diagRaw">alpha: —   beta: —   gamma: —
+gravity x/y/z: — / — / —
+permission: not requested</pre>
+        <div class="inline-actions"><button class="btn" id="copyDiag" type="button">⧉ העתק נתוני אבחון</button><button class="btn" id="checkDiag" type="button">↻ בדוק הגבלות</button></div>
+        <p class="hint">Real sensor data is counted ONLY when Android sends actual events. The FX self-test is labeled SIMULATION and never adds to these counters. For the real test, open this as a standalone HTTPS website.</p>
+      </section>
+      <div class="message" id="message" aria-live="polite">בטלפון: לחץ על ״הפעל חיישן הטיה״ ואשר גישה לתנועה. אם הדפדפן לא מאפשר חיישנים, הפקדים הידניים וגרירה עדיין עובדים.</div>
+      <p class="footer"><b>טיפ:</b> התחל ב־Main Profile ובדוק שריון / קצוות. ניתן גם להנמיך את עוצמת הצבע ולשנות את מצב ה־Blend כדי לקבל מראה של קלף foil אמיתי. התמונה שמועלת נשארת בדפדפן.</p>
+    </aside>
+  </main>
+</div>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const clamp = (value, min=-1, max=1) => Math.max(min, Math.min(max, value));
+  const fmt = n => Number.isFinite(n) ? Number(n).toFixed(2) : '—';
+  const card=$('card'),zone=$('zone'),art=$('art'),foil=$('foil'),iri=$('iri'),glint=$('glint'),sheen=$('sheen'),fxMask=$('fxMask');
+  const ids=['foilAmount','shineAmount','depth','parallax','bands','sensitivity'];
+  // The following values are intentionally kept equal to the user's chosen Main Profile.
+  const mainOriginal={foilAmount:74,shineAmount:68,depth:16,parallax:13,bands:4,sensitivity:35,blend:'soft-light',mask:'armor'};
+  let stored=null;
+  try { stored=JSON.parse(localStorage.getItem('prism-tilt-main-v3') || localStorage.getItem('prism-tilt-main-v2') || 'null'); } catch {}
+  const main=(stored && Number.isFinite(stored.foilAmount)) ? {...mainOriginal,...stored} : {...mainOriginal};
+  const presets={main,holo:{...mainOriginal,blend:'screen',mask:'full'},subtle:{foilAmount:29,shineAmount:33,depth:9,parallax:5,bands:3,sensitivity:40,blend:'soft-light',mask:'spot'},foil:{foilAmount:51,shineAmount:87,depth:13,parallax:8,bands:7,sensitivity:37,blend:'overlay',mask:'armor'},neon:{foilAmount:100,shineAmount:96,depth:25,parallax:24,bands:6,sensitivity:30,blend:'color-dodge',mask:'full'}};
+  const state={x:0,y:0,tx:0,ty:0,drag:false,compare:false,sensor:false,simulation:false,simToken:0,
+    baseOrientation:null,baseGravity:null,rawOrientation:null,rawGravity:null,
+    orientationCount:0,orientationValid:0,absoluteCount:0,motionCount:0,motionValid:0,
+    lastOrientationAt:0,lastMotionAt:0,lastInputAt:0,seenMovement:false,
+    orientationMoved:false,gravityMoved:false,source:'none',permission:'not requested',startTime:0,
+    permissionError:null,reduced:window.matchMedia('(prefers-reduced-motion: reduce)').matches};
+  const read=id=>Number($(id).value);
+  function report(msg){$('message').textContent=msg}
+  function verdict(msg, kind=''){const el=$('sensorVerdict');el.className='sensor-verdict '+kind;$('verdictText').textContent=msg;}
+  function modeLabel(s,on=false){$('status').textContent=s;$('status').classList.toggle('on',on)}
+  function outputs(){const units={foilAmount:'%',shineAmount:'%',depth:'°',parallax:'px',bands:'',sensitivity:''};
+    ids.forEach(id=>$(id+'Out').textContent=$(id).value+units[id]);
+    $('xRangeOut').textContent=$('xRange').value+'%';$('yRangeOut').textContent=$('yRange').value+'%';}
+  function applySettings(){outputs();const width=330-(read('bands')-1)*34;
+    foil.style.setProperty('--stripe',width+'px');[.17,.34,.51,.68,.85].forEach((k,i)=>foil.style.setProperty('--s'+(i+1),Math.round(width*k)+'px'));
+    foil.style.mixBlendMode=$('blend').value;foil.style.opacity=read('foilAmount')/100;
+    iri.style.opacity=read('foilAmount')/100*.7;glint.style.opacity=read('shineAmount')/100;sheen.style.opacity=read('shineAmount')/100*.6;}
+  const maskSVG='<svg xmlns="http://www.w3.org/2000/svg" width="480" height="650" viewBox="0 0 480 650"><g fill="white"><path d="M135 399 L190 365 L294 365 L351 402 L386 650 L97 650 Z"/><path d="M146 219 L176 150 L218 124 L240 115 L262 124 L301 156 L337 222 L334 323 L304 373 L240 405 L176 374 L143 322 Z"/><path d="M155 89 L215 135 L240 114 L266 135 L326 89 L307 160 L341 204 L302 187 L240 164 L180 188 L140 206 L171 162 Z"/><path d="M28 650 L92 412 L175 357 L183 650 Z M452 650 L385 412 L310 357 L302 650 Z"/></g></svg>';
+  const armorURL='url("data:image/svg+xml,'+encodeURIComponent(maskSVG)+'")';
+  let currentMask='armor',maskURL=null,imageURL=null;
+  function maskStyle(mode){currentMask=mode;let rule='none';
+    if(mode==='armor')rule=armorURL;
+    if(mode==='edges')rule='radial-gradient(ellipse 57% 55% at 50% 48%, transparent 19%, rgba(0,0,0,.25) 48%, #000 83%)';
+    if(mode==='spot')rule='radial-gradient(ellipse 45% 38% at var(--hx,50%) var(--hy,40%), #000 8%, rgba(0,0,0,.85) 35%, transparent 100%)';
+    if(mode==='custom')rule=maskURL?'url("'+maskURL+'")':'none';
+    fxMask.style.webkitMaskImage=rule;fxMask.style.maskImage=rule;
+    document.querySelectorAll('.mask-choice').forEach(b=>{b.classList.toggle('active',b.dataset.mask===mode);b.setAttribute('aria-pressed',String(b.dataset.mask===mode));});
+    if(mode==='custom' && !maskURL)report('Choose a transparent PNG mask. Opaque pixels receive the effect.');}
+  function capture(){return {...Object.fromEntries(ids.map(id=>[id,read(id)])),blend:$('blend').value,mask:currentMask}}
+  function preset(p){if(!p)return;ids.forEach(id=>$(id).value=p[id]);$('blend').value=p.blend;maskStyle(p.mask||'full');applySettings()}
+  document.querySelectorAll('.mask-choice').forEach(b=>b.addEventListener('click',()=>{maskStyle(b.dataset.mask);$('preset').value='custom'}));
+  ids.forEach(id=>$(id).addEventListener('input',()=>{applySettings();$('preset').value='custom'}));
+  $('blend').addEventListener('change',()=>{applySettings();$('preset').value='custom'});
+  $('preset').addEventListener('change',()=>preset(presets[$('preset').value]));
+  $('saveMain').addEventListener('click',()=>{Object.assign(main,capture());try{localStorage.setItem('prism-tilt-main-v3',JSON.stringify(main));report('Main Profile saved locally on this device.')}catch{report('Main Profile saved for this tab only (localStorage unavailable).')}$('preset').value='main'});
+  $('resetMain').addEventListener('click',()=>{Object.assign(main,mainOriginal);try{localStorage.removeItem('prism-tilt-main-v3');localStorage.removeItem('prism-tilt-main-v2')}catch{}$('preset').value='main';preset(main);report('Main Profile restored to 74 / 68 / 16° / 13px / 4 / 35 · Soft Light.');});
+  $('maskFile').addEventListener('change',e=>{const f=e.target.files?.[0];if(!f)return;
+    if(!['image/png','image/webp'].includes(f.type)||f.size>10*1024*1024){report('Use a PNG or WebP mask smaller than 10MB.');return}
+    if(maskURL)URL.revokeObjectURL(maskURL);maskURL=URL.createObjectURL(f);$('preset').value='custom';maskStyle('custom');report('Custom mask loaded locally.');});
+  $('imageFile').addEventListener('change',e=>{const f=e.target.files?.[0];if(!f)return;
+    if(!f.type.startsWith('image/')||f.size>25*1024*1024){report('Use an image smaller than 25MB.');return}
+    if(imageURL)URL.revokeObjectURL(imageURL);imageURL=URL.createObjectURL(f);$('uploadedImage').src=imageURL;$('uploadedImage').style.display='block';$('demoArt').style.display='none';
+    // The armor-shaped demo mask is not aligned with the user's uploaded portrait.
+    if(currentMask==='armor'){maskStyle('spot');$('preset').value='custom'}
+    report('Photo loaded locally. Switched demo armor mask to Spot so the prism remains visible on YOUR photo.');});
+  function syncManual(){$('xRange').value=Math.round(state.tx*100);$('yRange').value=Math.round(state.ty*100);outputs()}
+  function stopSimulation(){state.simToken++;state.simulation=false;$('testFxBtn').classList.remove('running');$('testFxBtn').textContent='🧪 Test FX (no sensor)'}
+  function stopSensor(message){state.sensor=false;window.removeEventListener('deviceorientation',onOrientation);window.removeEventListener('deviceorientationabsolute',onAbsolute);window.removeEventListener('devicemotion',onMotion);
+    state.baseOrientation=null;state.baseGravity=null;$('sensorBtn').textContent='📱 Connect phone tilt';$('sensorBtn').classList.remove('live');modeLabel('Touch / mouse');if(message)report(message)}
+  function manual(){if(state.sensor)stopSensor('Switched to manual input.');if(state.simulation)stopSimulation();state.tx=read('xRange')/100;state.ty=read('yRange')/100;outputs()}
+  $('xRange').addEventListener('input',manual);$('yRange').addEventListener('input',manual);
+  function pointer(e){const r=zone.getBoundingClientRect();state.tx=clamp(((e.clientX-r.left)/r.width-.5)*2);state.ty=clamp(((e.clientY-r.top)/r.height-.5)*2);syncManual()}
+  zone.addEventListener('pointerdown',e=>{if(state.sensor)stopSensor('Switched to pointer input.');if(state.simulation)stopSimulation();state.drag=true;try{zone.setPointerCapture(e.pointerId)}catch{}pointer(e)});
+  zone.addEventListener('pointermove',e=>{if(state.sensor||state.simulation||(e.pointerType==='touch'&&!state.drag))return;pointer(e)});
+  zone.addEventListener('pointerup',()=>state.drag=false);zone.addEventListener('pointercancel',()=>state.drag=false);
+  zone.addEventListener('pointerleave',()=>{if(!state.sensor&&!state.drag&&!state.simulation){state.tx=state.ty=0;syncManual()}});
+  function screenTransform(x,y){const a=((screen.orientation?.angle??window.orientation??0)+360)%360;
+    if(a===90)return [y,-x];if(a===270)return [-y,x];if(a===180)return [-x,-y];return [x,y]}
+  function shortestAngleDelta(a,b){return ((a-b+540)%360)-180}
+  function applyTilt(x,y,source){if(!state.sensor)return;[x,y]=screenTransform(clamp(x),clamp(y));
+    state.tx=x;state.ty=y;state.source=source;syncManual();state.lastInputAt=performance.now();
+    if(Math.max(Math.abs(x),Math.abs(y))>.04)state.seenMovement=true;
+    modeLabel(source==='gravity fallback'?'Gravity fallback LIVE':'Orientation LIVE',true);
+    $('diagState').textContent='LIVE ✓';verdict('LIVE sensor data → '+source+'. Tilt now controls the Prism.', 'good');}
+  function onOrientation(e){readOrientation(e,'orientation')}
+  function onAbsolute(e){readOrientation(e,'orientationabsolute')}
+  function readOrientation(e,source){if(!state.sensor)return;
+    if(source==='orientation')state.orientationCount++;else state.absoluteCount++;
+    if(source==='orientation' || !state.rawOrientation)state.rawOrientation={alpha:e.alpha,beta:e.beta,gamma:e.gamma};
+    if(!Number.isFinite(e.beta)||!Number.isFinite(e.gamma))return;
+    if(source==='orientation')state.orientationValid++;
+    const now=performance.now();
+    // Prefer deviceorientation; absolute is used only when normal orientation is absent/stale.
+    if(source==='orientation')state.lastOrientationAt=now;
+    else if(now-state.lastOrientationAt<1200)return;
+    if(!state.baseOrientation)state.baseOrientation={beta:e.beta,gamma:e.gamma};
+    const b=state.baseOrientation,d=read('sensitivity');
+    const x=clamp((e.gamma-b.gamma)/d),y=clamp(shortestAngleDelta(e.beta,b.beta)/d);
+    if(Math.max(Math.abs(x),Math.abs(y))>.025)state.orientationMoved=true;
+    // If the orientation API returns constant values but gravity is changing, allow motion fallback.
+    if(!state.orientationMoved&&state.gravityMoved&&now-state.startTime>1500)return;
+    applyTilt(x,y,source);
+  }
+  function onMotion(e){if(!state.sensor)return;state.motionCount++;
+    const g=e.accelerationIncludingGravity;
+    if(!g||!Number.isFinite(g.x)||!Number.isFinite(g.y)||!Number.isFinite(g.z))return;
+    state.motionValid++;state.lastMotionAt=performance.now();state.rawGravity={x:g.x,y:g.y,z:g.z};
+    const gx=Math.atan2(g.x,Math.hypot(g.y,g.z))*180/Math.PI;
+    const gy=Math.atan2(g.y,Math.hypot(g.x,g.z))*180/Math.PI;
+    if(!state.baseGravity)state.baseGravity={gx,gy};
+    const x=clamp((gx-state.baseGravity.gx)/read('sensitivity'));
+    const y=clamp((gy-state.baseGravity.gy)/read('sensitivity'));
+    if(Math.max(Math.abs(x),Math.abs(y))>.025)state.gravityMoved=true;
+    const recentOrientation=(performance.now()-state.lastOrientationAt<1100);
+    if(recentOrientation && (state.orientationMoved || !state.gravityMoved))return;
+    applyTilt(x,y,'gravity fallback');
+  }
+  function environment(){const embedded=window.self!==window.top;
+    const proto=location.protocol;const topLevel=embedded?'Embedded / iframe':'Top level';
+    $('diagHttps').textContent=(proto==='https:'?'HTTPS ✓':(proto==='http:'?'HTTP ⚠':proto+' local ⚠'))+(isSecureContext?' / secure':' / insecure');
+    $('diagFrame').textContent=topLevel;
+    const policy=document.permissionsPolicy||document.featurePolicy;
+    let notes=[];
+    for(const name of ['accelerometer','gyroscope']){
+      if(policy&&typeof policy.allowsFeature==='function'){
+        try{notes.push(name+'='+(policy.allowsFeature(name)?'allowed':'BLOCKED'))}catch{notes.push(name+'=?')}
+      }
+    }
+    $('diagPolicy').textContent=notes.length?notes.join(' · '):'Not exposed (unknown)';
+    return {proto,embedded,secure:isSecureContext,policy:notes};}
+  function classify(){const env=environment();
+    if(state.simulation){verdict('SIMULATED FX test running — this does NOT use the phone sensor.','good');return}
+    if(state.sensor){
+      if(state.source!=='none'){
+        if(!state.seenMovement){verdict('Real sensor events received. Tilt the phone; readings may still be at the calibration baseline.','good')}
+        else verdict('CONNECTED: real '+state.source+' values are moving the Prism.', 'good');
+        return;
+      }
+      if(performance.now()-state.startTime>3800){
+        if(state.orientationCount+state.motionCount+state.absoluteCount===0){verdict('NO SENSOR EVENTS. Check HTTPS, frame restrictions, and site motion-sensor permission.','fail');$('diagState').textContent='No events';}
+        else if(state.orientationValid+state.motionValid===0){verdict('EVENTS, NO NUMERIC VALUES. Sensor permission/policy may be filtering the payload.','fail');$('diagState').textContent='Empty values';}
+        else {verdict('Some valid samples arrived, but no active input yet. Tap Recalibrate and move the phone.','warn')}
+      } else {verdict('Listening for real sensor data… Move your phone slowly.','');}
+      return;
+    }
+    if(!env.secure){verdict('BLOCKED: this page is not a secure context. Host it on HTTPS.','fail');return}
+    if(env.embedded){verdict('This page is EMBEDDED. Sensor access may be blocked by the parent frame. Open a direct HTTPS URL.','warn');return}
+    if(env.proto==='file:'){verdict('LOCAL FILE: motion sensors can be restricted here. Publish this file to HTTPS for a reliable test.','warn');return}
+    verdict('Ready: ① Test FX ② Connect phone tilt. Both tests report independently.');
+  }
+  $('checkDiag').addEventListener('click',classify);
+  function permissionsRequested(){
+    // Both calls MUST be initiated synchronously inside the same user click gesture.
+    const requested=[];
+    try { if(typeof DeviceOrientationEvent!=='undefined' && typeof DeviceOrientationEvent.requestPermission==='function')
+      requested.push(['orientation',DeviceOrientationEvent.requestPermission()]); } catch(err){requested.push(['orientation',Promise.reject(err)])}
+    try { if(typeof DeviceMotionEvent!=='undefined' && typeof DeviceMotionEvent.requestPermission==='function')
+      requested.push(['motion',DeviceMotionEvent.requestPermission()]); } catch(err){requested.push(['motion',Promise.reject(err)])}
+    if(!requested.length){state.permission='not required by this browser';return Promise.resolve(state.permission)}
+    return Promise.allSettled(requested.map(item=>item[1])).then(res=>{
+      const parts=res.map((r,i)=>requested[i][0]+':'+(r.status==='fulfilled'?r.value:(r.reason?.name||'error')));
+      state.permission=parts.join(' · ');return state.permission;});
+  }
+  $('sensorBtn').addEventListener('click',async()=>{
+    if(state.sensor){stopSensor('Sensor stopped.');classify();return}
+    if(state.simulation)stopSimulation();
+    const env=environment();
+    if(!env.secure){verdict('HTTPS REQUIRED: this page is not a secure context.','fail');report('Publish the supplied index.html on GitHub Pages or another HTTPS host.');return;}
+    if(!('DeviceOrientationEvent' in window)&&!('DeviceMotionEvent' in window)){
+      verdict('NO DEVICE ORIENTATION API exposed to this page.','fail');report('This browser/context does not expose either sensor event API.');return;}
+    const blocked=env.policy.filter(x=>x.includes('BLOCKED'));
+    if(blocked.some(x=>x.startsWith('accelerometer=BLOCKED'))){verdict('Accelerometer Permissions-Policy BLOCKED: '+blocked.join(', '),'fail');report('Gravity fallback needs accelerometer permission. Open a direct HTTPS URL, or fix its Permissions-Policy.');return;}
+    if(blocked.length)report('Gyroscope policy is blocked; attempting accelerometer gravity fallback.');
+    state.permission='checking';state.permissionError=null;
+    // Trigger permission while the original click user activation still exists.
+    const permissions=await permissionsRequested();
+    if(/denied|NotAllowedError|SecurityError/.test(permissions) &&
+      !(/granted|not required/.test(permissions))){
+      verdict('SENSOR PERMISSION DENIED: '+permissions,'fail');report('Enable motion sensors for this page in browser site settings.');return;}
+    state.sensor=true;state.baseOrientation=null;state.baseGravity=null;state.rawOrientation=null;state.rawGravity=null;
+    state.orientationCount=0;state.orientationValid=0;state.absoluteCount=0;state.motionCount=0;state.motionValid=0;
+    state.lastOrientationAt=0;state.lastMotionAt=0;state.lastInputAt=0;state.seenMovement=false;
+    state.orientationMoved=false;state.gravityMoved=false;state.source='none';state.tx=0;state.ty=0;state.startTime=performance.now();
+    window.addEventListener('deviceorientation',onOrientation,{passive:true});
+    window.addEventListener('deviceorientationabsolute',onAbsolute,{passive:true});
+    window.addEventListener('devicemotion',onMotion,{passive:true});
+    $('sensorBtn').textContent='⏹ Disconnect sensor';$('sensorBtn').classList.add('live');modeLabel('Listening…');$('diagState').textContent='Listening…';
+    report('Connected listeners. Tilt your phone left/right and up/down while watching the event counters.');
+    classify();setTimeout(()=>{if(state.sensor)classify()},4200);
+  });
+  $('testFxBtn').addEventListener('click',()=>{
+    if(state.simulation){stopSimulation();state.tx=state.ty=0;classify();return}
+    if(state.sensor)stopSensor('Switched to simulated FX testing.');
+    state.simulation=true;state.source='none';state.tx=state.ty=0;const token=++state.simToken;
+    $('testFxBtn').classList.add('running');$('testFxBtn').textContent='⏹ Stop FX test';modeLabel('SIMULATION (no sensor)',true);
+    verdict('SIMULATED FX: card will move in a circle; this proves only that the Prism renderer works.','good');
+    report('FX self-test is a 6-second animation. It does NOT fake or count real sensor events.');
+    const start=performance.now();const originalTransform=card.style.transform;let verified=false;
+    function tick(now){if(!state.simulation||token!==state.simToken)return;const t=(now-start)/1000;
+      state.tx=Math.sin(t*2.5)*.8;state.ty=Math.cos(t*2.0)*.55;syncManual();
+      if(t>.55 && card.style.transform!==originalTransform)verified=true;
+      if(t<6)requestAnimationFrame(tick);else{stopSimulation();state.tx=state.ty=0;modeLabel('Touch / mouse');verdict(verified?'FX self-test PASS: the card transform changed. Now test real phone tilt.':'FX self-test FAIL: renderer transform did not update.',verified?'good':'fail');report('Self-test complete. Real sensor counters remain unchanged.');}}
+    requestAnimationFrame(tick);
+  });
+  $('recenterBtn').addEventListener('click',()=>{state.tx=state.ty=0;state.x=state.y=0;state.baseOrientation=null;state.baseGravity=null;state.orientationMoved=false;state.gravityMoved=false;state.seenMovement=false;syncManual();
+    report(state.sensor?'Recalibrated. Current phone position becomes zero at the next sample.':'Recentered manual tilt.');});
+  $('compareBtn').addEventListener('click',()=>{state.compare=!state.compare;card.classList.toggle('compare',state.compare);$('compareBtn').classList.toggle('before',state.compare);$('compareBtn').textContent=state.compare?'◧ חזור לאפקט':'◧ הצג מקור'});
+  window.addEventListener('keydown',e=>{if(e.target.matches('input,select,button'))return;const d=.12;
+    if(e.key==='ArrowLeft')state.tx-=d;else if(e.key==='ArrowRight')state.tx+=d;else if(e.key==='ArrowUp')state.ty-=d;else if(e.key==='ArrowDown')state.ty+=d;else return;
+    e.preventDefault();if(state.sensor)stopSensor('Manual keyboard input.');if(state.simulation)stopSimulation();state.tx=clamp(state.tx);state.ty=clamp(state.ty);syncManual()});
+  function diagText(){const o=state.rawOrientation||{},g=state.rawGravity||{};
+    return 'alpha: '+fmt(o.alpha)+'   beta: '+fmt(o.beta)+'   gamma: '+fmt(o.gamma)+'\n'+
+      'gravity x/y/z: '+fmt(g.x)+' / '+fmt(g.y)+' / '+fmt(g.z)+'\n'+
+      'permission: '+state.permission;}
+  function updateDiag(){
+    $('diagSource').textContent=state.simulation?'SIMULATION (not sensor)':state.source;
+    $('diagOCount').textContent=state.orientationCount+' (valid '+state.orientationValid+')';
+    $('diagMCount').textContent=state.motionCount+' (valid '+state.motionValid+')';
+    $('diagPermission').textContent=state.permission;
+    $('diagMovement').textContent=state.seenMovement?'Yes, real tilt ✓':(state.sensor?'No / still baseline':'not tested');
+    $('diagRaw').textContent=diagText();
+  }
+  $('copyDiag').addEventListener('click',async()=>{
+    updateDiag();const payload=['PRISM TILT LAB v3',
+      'url_protocol='+location.protocol+' secureContext='+isSecureContext+' iframe='+(self!==top),
+      'userAgent='+navigator.userAgent,'policy='+$('diagPolicy').textContent,
+      'sensorEnabled='+state.sensor+' simulation='+state.simulation,
+      'orientationCount='+state.orientationCount+' valid='+state.orientationValid+' absoluteCount='+state.absoluteCount,
+      'motionCount='+state.motionCount+' valid='+state.motionValid,
+      'movement='+state.seenMovement+' source='+state.source,'verdict='+$('verdictText').textContent,diagText()].join('\n');
+    try{await navigator.clipboard.writeText(payload);report('Copied diagnostics. Paste the report into our chat.');}
+    catch{const ta=document.createElement('textarea');ta.value=payload;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();report('Copied diagnostics (legacy clipboard fallback).')}});
+  function render(){const smooth=state.reduced?1:.13;state.x+=(state.tx-state.x)*smooth;state.y+=(state.ty-state.y)*smooth;
+    const d=read('depth'),p=read('parallax');card.style.transform=state.compare?'none':`rotateX(${(-state.y*d).toFixed(2)}deg) rotateY(${(state.x*d).toFixed(2)}deg)`;
+    art.style.transform=`translate(${(state.x*p).toFixed(2)}px,${(state.y*p).toFixed(2)}px) scale(1.08)`;
+    foil.style.transform=`translate(${(-state.x*52).toFixed(1)}px,${(-state.y*52).toFixed(1)}px) rotate(${(state.x*9).toFixed(2)}deg)`;
+    card.style.setProperty('--hx',(50+state.x*39).toFixed(1)+'%');card.style.setProperty('--hy',(40+state.y*43).toFixed(1)+'%');
+    card.style.setProperty('--angle',(30+state.x*80+state.y*25).toFixed(1)+'deg');
+    sheen.style.transform=`translateX(${(state.x*90).toFixed(1)}px)`;
+    $('coords').textContent=`X ${(state.x*d).toFixed(0)}° · Y ${(state.y*d).toFixed(0)}°`;
+    requestAnimationFrame(render);
+  }
+  preset(main);$('preset').value='main';environment();classify();updateDiag();setInterval(updateDiag,400);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden&&state.simulation)stopSimulation();if(!document.hidden)classify()});
+  render();
+})();
+</script>
+</body>
+</html>
